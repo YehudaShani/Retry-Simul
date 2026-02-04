@@ -43,8 +43,8 @@ def main():
             print("--------------------------------")
 
         #save the list of stopped at bitmasks to a file
-        with open('stopped_at_bitmasks.json', 'w') as f:
-            json.dump(stopped_at_bitmasks, f)
+    with open('stopped_at_bitmasks.json', 'w') as f:
+        json.dump(stopped_at_bitmasks, f)
         
 
 if __name__ == "__main__":
