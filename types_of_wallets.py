@@ -1,0 +1,24 @@
+import itertools
+
+
+def symmetric_wallet(key_count, threshold):
+    """Generate a symmetric (k-of-n) wallet as OR of all size-k conjunctions."""
+    if key_count <= 0:
+        raise ValueError("key_count must be positive")
+    if threshold <= 0 or threshold > key_count:
+        raise ValueError("threshold must be in [1, key_count]")
+
+    wallet = []
+    for combo in itertools.combinations(range(1, key_count + 1), threshold):
+        mask = 0
+        for idx in combo:
+            mask |= 1 << (idx - 1)
+        wallet.append(mask)
+    return wallet
+
+
+def generate_all_bitmasks(key_count):
+    return [i for i in range(2 ** key_count)]
+
+def generate_wallets_above_threshold(key_count, threshold):
+    return [i for i in range(2 ** key_count) if bin(i).count('1') >= threshold]
