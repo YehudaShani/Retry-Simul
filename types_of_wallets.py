@@ -20,5 +20,10 @@ def symmetric_wallet(key_count, threshold):
 def generate_all_bitmasks(key_count):
     return [i for i in range(2 ** key_count)]
 
-def generate_wallets_above_threshold(key_count, threshold):
+
+def generate_bitmasks_above_threshold(key_count, threshold):
     return [i for i in range(2 ** key_count) if bin(i).count('1') >= threshold]
+
+
+def generate_single_bitmask(amount_of_available_keys):
+    return 2 ** amount_of_available_keys - 1

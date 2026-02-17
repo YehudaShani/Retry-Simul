@@ -1,9 +1,12 @@
 from dataclasses import dataclass
+import random
 from typing import Iterable, List, Sequence, Dict
 from consts import SAFE, LOST, LEAKED, STOLEN, KeyStates
 
 import computations
 import wallet_enumerations
+from types_of_wallets import generate_bitmasks_above_threshold
+from wallet_enumerations import isCovered
 
 
 @dataclass
@@ -27,12 +30,41 @@ class WalletState:
     def add_bitmask(self, bitmask: int) -> None:
         if not isinstance(bitmask, int) or bitmask < 0:
             raise ValueError("bitmask must be a non-negative integer")
+        if bitmask in self.bitmasks:
+            return
         self.bitmasks.append(bitmask)
 
     def remove_bitmask(self, bitmask: int) -> None:
         if bitmask not in self.bitmasks:
-            raise ValueError("bitmask not found in wallet state")
-        self.bitmasks.remove(bitmask)
+            return
+
+        # remove all instances of bitmask from the list (should technically only be one instance, but just in case)
+        self.bitmasks = [mask for mask in self.bitmasks if mask != bitmask]
+
+    def remove_bitmask_and_subsets(self, bitmask_to_remove: int) -> None:
+
+        for bitmask in self.bitmasks:
+            self.add_supersets_of_bitmask(bitmask)
+
+        to_remove = [
+            bitmask for bitmask in self.bitmasks
+            if (bitmask & bitmask_to_remove) == bitmask
+        ]
+
+        for bitmask in to_remove:
+            self.remove_bitmask(bitmask)
+
+       #self.add_supersets_of_bitmask(bitmask_to_remove)
+       #self.remove_bitmask(bitmask_to_remove)
+
+    def add_supersets_of_bitmask(self, bitmask: int) -> None:
+        for i in range(self.key_count):
+            new_bitmask = bitmask | (1 << i)
+            if new_bitmask not in self.bitmasks:
+                self.bitmasks.append(new_bitmask)
+
+    def bitmask_is_in_wallet(self, bitmask: int) -> bool:
+        return isCovered(bitmask, self.bitmasks)
 
     def __str__(self) -> str:
         return (
@@ -52,15 +84,15 @@ class WalletState:
     def fill_up_to_threshold(self, threshold: int):
         # fill the wallet from the largest bitmask to smallest until all bitsmasks of size threshold are added
         # after every addition, check if the wallet success rate has increased. if not, print the wallet and break.
-        for bitmask in range(2 ** self.key_count - 1, -1, -1):
-            success_probability = self.compute_success_probability()
-            if bin(bitmask).count('1') >= threshold:
-                self.add_bitmask(bitmask)
-                new_success_probability = self.compute_success_probability()
-                if new_success_probability > success_probability:
-                    success_probability = new_success_probability
-                else:
-                
-                    return self.bitmasks, bitmask, success_probability
-        
+        bitmasks_to_add = generate_bitmasks_above_threshold(self.key_count, threshold)
+        bitmasks_to_add.sort(key=lambda x: random.random())
+        success_probability = self.compute_success_probability()
+        for bitmask in bitmasks_to_add:
+            self.add_bitmask(bitmask)
+            new_success_probability = self.compute_success_probability()
+            if new_success_probability >= success_probability:
+                success_probability = new_success_probability
+            else:
+                return self.bitmasks, bitmask, success_probability
+
         return self.bitmasks, None, success_probability

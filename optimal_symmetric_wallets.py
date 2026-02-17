@@ -11,6 +11,7 @@ def find_optimal_symmetric_wallets(keyCount, keyStateProbabilities, verbose=Fals
     states, state_probabilities = wallet_enumerations.enumerateStates(
         keyCount, keyStateProbabilities
     )
+    #print("The sum of the state probabilities is ", sum(state_probabilities))
     ownerStates, advStates = wallet_enumerations.ownerAdvKeysFromStates(states)
 
     for threshold in range(1, keyCount + 1):
