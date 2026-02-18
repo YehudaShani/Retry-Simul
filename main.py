@@ -10,12 +10,13 @@ import random
 import json
 import constrained_probabilities
 import experiments
+import wallet_visualizer
 
 
 
 def main():
-    experiments.check_if_every_added_combination_to_previous_symmetric_increases_success_probability()
-
+    key_count, probabilities, wallet = experiments.check_if_adding_combs_to_symmetric_wallet_relative_to_optimal_symmetric(0, 1)
+    wallet_visualizer.run_visualizer(key_count, probabilities, wallet)
 
 
 if __name__ == "__main__":

@@ -65,32 +65,40 @@ def check_if_adding_comb_after_optimal_threshold_increases_success_probability()
         wallet.add_bitmask(new_bitmask)
         new_success_probability = wallet.compute_success_probability()
         if new_success_probability > optimal_success_probability:
-            print("The optimal symmetric wallet is: threshold ", optimal_threshold, " with bitmasks ", optimal_symmetric_wallet)
+            print("The optimal symmetric wallet is: threshold ", optimal_threshold, " with bitmasks ",
+                  optimal_symmetric_wallet)
             print("with success probability: ", optimal_success_probability)
             print("The new bitmask is: ", new_bitmask)
             print("The new success probability is: ", new_success_probability)
             print("--------------------------------")
             print("--------------------------------")
-            break
+            return
 
     return
 
-def check_if_every_added_combination_to_next_layer_symmetric_increases_success_probability():
+
+def check_if_adding_combs_to_symmetric_wallet_relative_to_optimal_symmetric(symmetric_layer_from_optimal=1,
+                                                                            layer_from_optimal_to_start_checking_combs=1):
+    # Finds the k symmetric optimal, generates a new symmetric wallet with threshold t above the optimal. Removes
+    # combinations of sizes k+2, k+3, ... and their subsets, then checks if adding them increases the success
+    # probability.
+
     keyCount = 7
     probabilities = computations.generateKeyFaultProbabilityScenarios(step=0.01)
     probabilities = random.sample(probabilities, 200)
     #probabilities = [{1: 0.14, 2: 0.02, 3: 0.78, 4: 0.06}]
     for probability in probabilities:
         print(f"Processing probability {probability}")
-        states, state_probabilities = wallet_enumerations.enumerateStates(keyCount, probability)
-        owner_states, adversary_states = wallet_enumerations.ownerAdvKeysFromStates(states)
         optimal_symmetric_wallet, optimal_success_probability, optimal_threshold = optimal_symmetric_wallets.find_optimal_symmetric_wallets(
             keyCount, probability)
-        if optimal_threshold + 2 >= keyCount:
+        if optimal_threshold + symmetric_layer_from_optimal > keyCount:
             continue
-        next_layer_symmetric_wallet = symmetric_wallet(keyCount, optimal_threshold + 1)
-        for layer in range(optimal_threshold+2, keyCount + 1):
-            base_wallet = wallet_state.WalletState(keyCount, next_layer_symmetric_wallet, probability)
+
+        symmetric_wallet_from_optimal = symmetric_wallet(keyCount, optimal_threshold + symmetric_layer_from_optimal)
+        minimum_layer_to_check = min(keyCount, optimal_threshold + layer_from_optimal_to_start_checking_combs)
+
+        for layer in range(minimum_layer_to_check, keyCount + 1):
+            base_wallet = wallet_state.WalletState(keyCount, symmetric_wallet_from_optimal, probability)
             bitmask_to_remove = generate_single_bitmask(layer)
             base_wallet.remove_bitmask_and_subsets(bitmask_to_remove)
             success_probability_without_bitmask = base_wallet.compute_success_probability()
@@ -105,7 +113,8 @@ def check_if_every_added_combination_to_next_layer_symmetric_increases_success_p
                 print("The success probability with the bitmask is: ", success_probability_with_bitmask)
                 print("--------------------------------")
                 print("--------------------------------")
-                break
+                return keyCount, probability, base_wallet
+
 
 
 def check_if_every_added_combination_to_previous_symmetric_increases_success_probability():
@@ -122,7 +131,7 @@ def check_if_every_added_combination_to_previous_symmetric_increases_success_pro
         if optimal_threshold <= 1:
             continue
         previous_layer_symmetric_wallet = symmetric_wallet(keyCount, optimal_threshold - 1)
-        for layer in range(optimal_threshold+2, keyCount + 1):
+        for layer in range(optimal_threshold + 2, keyCount + 1):
             base_wallet = wallet_state.WalletState(keyCount, previous_layer_symmetric_wallet, probability)
             bitmask_to_remove = generate_single_bitmask(layer)
             base_wallet.remove_bitmask_and_subsets(bitmask_to_remove)
@@ -140,6 +149,7 @@ def check_if_every_added_combination_to_previous_symmetric_increases_success_pro
                 print("--------------------------------")
                 break
 
+
 def check_if_every_added_combination_to_or_wallet_increases_success_probability():
     #False
     keyCount = 7
@@ -155,7 +165,7 @@ def check_if_every_added_combination_to_or_wallet_increases_success_probability(
         if optimal_threshold <= 1:
             continue
         or_symmetric_wallet = symmetric_wallet(keyCount, 1)
-        for layer in range(optimal_threshold+2, keyCount + 1):
+        for layer in range(optimal_threshold + 2, keyCount + 1):
             base_wallet = wallet_state.WalletState(keyCount, or_symmetric_wallet, probability)
             bitmask_to_remove = generate_single_bitmask(layer)
             base_wallet.remove_bitmask_and_subsets(bitmask_to_remove)
