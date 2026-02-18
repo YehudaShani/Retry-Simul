@@ -47,6 +47,14 @@ def run_visualizer(key_count: int = 4, probabilities: dict | None = None, base_w
     )
     symmetric_optimal_str = f"Symmetric optimal: {opt_threshold}-of-{key_count}" if opt_wallet else "Symmetric optimal: N/A"
 
+    optimal_wallet_states = ws.return_optimal_wallet_for_probability()
+    if len(optimal_wallet_states) == 1:
+        optimal_str = f"Optimal wallets: {walletStr(optimal_wallet_states[0].bitmasks)}"
+    else:
+        optimal_str = f"Optimal wallets ({len(optimal_wallet_states)}): " + "; ".join(
+            walletStr(w.bitmasks) for w in optimal_wallet_states
+        )
+
     root = tk.Tk()
     root.title("Wallet Bitmask Visualizer")
     root.geometry("800x600")
@@ -60,7 +68,10 @@ def run_visualizer(key_count: int = 4, probabilities: dict | None = None, base_w
     delta_label.pack(pady=(0, 4))
 
     subtitle_label = ttk.Label(root, text=symmetric_optimal_str, font=("", 10), wraplength=760)
-    subtitle_label.pack(pady=(0, 10))
+    subtitle_label.pack(pady=(0, 4))
+
+    optimal_subtitle_label = ttk.Label(root, text=optimal_str, font=("", 10), wraplength=760)
+    optimal_subtitle_label.pack(pady=(0, 10))
 
     canvas_frame = ttk.Frame(root)
     canvas_frame.pack(fill=tk.BOTH, expand=True)
