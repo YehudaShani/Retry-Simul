@@ -59,4 +59,4 @@ def build_cache(key_counts: range | None = None) -> None:
 
 
 if __name__ == "__main__":
-    build_cache()
+    build_cache(key_counts=[5,6])
