@@ -1,5 +1,6 @@
 from wallet_enumerations import SAFE, LOST, LEAKED, STOLEN
-from wallet_enumerations import enumerateStates, ownerAdvKeysFromStates, isCovered, enumerateStaticWallets, walletStr
+from wallet_enumerations import enumerateStates, ownerAdvKeysFromStates, isCovered, walletStr
+from wallet_cache import get_cached_static_wallets
 import math
 
 
@@ -148,7 +149,7 @@ def reportOptimalWalletsForProbabilities(
         List of tuples: (wallet, best_success_probability, probabilities_dict)
     """
     # Generate wallets once for all probability scenarios
-    wallets = enumerateStaticWallets(
+    wallets = get_cached_static_wallets(
         keyCount, deduplicate_by_architecture=deduplicate_by_architecture
     )
     

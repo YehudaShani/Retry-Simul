@@ -48,12 +48,20 @@ def run_visualizer(key_count: int = 4, probabilities: dict | None = None, base_w
     symmetric_optimal_str = f"Symmetric optimal: {opt_threshold}-of-{key_count}" if opt_wallet else "Symmetric optimal: N/A"
 
     optimal_wallet_states = ws.return_optimal_wallet_for_probability()
-    if len(optimal_wallet_states) == 1:
-        optimal_str = f"Optimal wallets: {walletStr(optimal_wallet_states[0].bitmasks)}"
+    optimal_success_prob = optimal_wallet_states[0].compute_success_probability() if optimal_wallet_states else 0.0
+    is_unique_and_symmetric = (
+        len(optimal_wallet_states) == 1
+        and opt_wallet is not None
+        and set(optimal_wallet_states[0].bitmasks) == set(opt_wallet)
+    )
+    if is_unique_and_symmetric:
+        optimal_str = f"Optimal: optimal symmetric wallet (success: {optimal_success_prob:.6f})"
+    elif len(optimal_wallet_states) == 1:
+        optimal_str = f"Optimal: {walletStr(optimal_wallet_states[0].bitmasks)} (success: {optimal_success_prob:.6f})"
     else:
-        optimal_str = f"Optimal wallets ({len(optimal_wallet_states)}): " + "; ".join(
+        optimal_str = f"Optimal ({len(optimal_wallet_states)}): " + "; ".join(
             walletStr(w.bitmasks) for w in optimal_wallet_states
-        )
+        ) + f" (success: {optimal_success_prob:.6f})"
 
     root = tk.Tk()
     root.title("Wallet Bitmask Visualizer")

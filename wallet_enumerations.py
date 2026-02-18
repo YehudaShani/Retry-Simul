@@ -18,9 +18,11 @@ def isCovered(keyCombination, wallet):
 # Build all possible static wallets for keyCount keys
 def enumerateStaticWallets(keyCount, deduplicate_by_architecture=True):
     # All possible key combinations (from 001, 010, 011, ..., 111)
+    print(f"Enumerating static wallets for {keyCount} keys")
     wallets = enumerateStaticSubWallets(baseWallet=[], prevCombi=0, keyCount=keyCount)
     if deduplicate_by_architecture:
         wallets = deduplicateWalletsByArchitecture(wallets, keyCount)
+    print(f"Enumerated {len(wallets)} static wallets")
     return wallets
 
 
