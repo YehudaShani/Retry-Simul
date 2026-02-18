@@ -96,3 +96,13 @@ class WalletState:
                 return self.bitmasks, bitmask, success_probability
 
         return self.bitmasks, None, success_probability
+    
+    def return_optimal_wallet_for_probability(self) -> List["WalletState"]:
+        results = computations.reportOptimalWalletsForProbabilities(
+            [self.probabilities], self.key_count
+        )
+        optimal_wallets, _best_p, _probs = results[0]
+        return [
+            WalletState(self.key_count, list(bitmasks), self.probabilities)
+            for bitmasks in optimal_wallets
+        ]
