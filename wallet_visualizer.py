@@ -183,24 +183,25 @@ def run_visualizer(key_count: int = 4, probabilities: dict | None = None, base_w
         )
         return btn
 
-    for row_idx, bitmasks_in_row in enumerate(groups):
-        row_frame = ttk.Frame(inner_frame)
-        row_frame.pack(fill=tk.X, padx=10, pady=4)
-        ttk.Label(row_frame, text=f"{row_idx + 1}-key:", width=8).pack(side=tk.LEFT, padx=(0, 8))
-        def add_all_in_layer(bitmasks=bitmasks_in_row):
+    for col_idx, bitmasks_in_col in enumerate(groups):
+        header_frame = ttk.Frame(inner_frame)
+        header_frame.grid(row=0, column=col_idx, padx=10, pady=(4, 6), sticky=tk.N)
+        ttk.Label(header_frame, text=f"{col_idx + 1}-key:").pack()
+
+        def add_all_in_layer(bitmasks=bitmasks_in_col):
             def change():
                 for m in bitmasks:
                     if not ws.bitmask_is_in_wallet(m):
                         ws.add_bitmask(m)
             with_change(change)
 
-        add_all_btn = ttk.Button(row_frame, text="Add all", command=add_all_in_layer)
-        add_all_btn.pack(side=tk.LEFT, padx=(0, 8))
-        inner = ttk.Frame(row_frame)
-        inner.pack(side=tk.LEFT, fill=tk.X, expand=True)
-        for m in bitmasks_in_row:
-            btn = make_toggle(m, inner)
-            btn.pack(side=tk.LEFT, padx=2, pady=2)
+        add_all_btn = ttk.Button(header_frame, text="Add all", command=add_all_in_layer)
+        add_all_btn.pack(pady=(2, 0))
+
+    for col_idx, bitmasks_in_col in enumerate(groups):
+        for row_idx, m in enumerate(bitmasks_in_col, start=1):
+            btn = make_toggle(m, inner_frame)
+            btn.grid(row=row_idx, column=col_idx, padx=4, pady=2, sticky=tk.EW)
             buttons[m] = btn
 
     inner_frame.update_idletasks()
