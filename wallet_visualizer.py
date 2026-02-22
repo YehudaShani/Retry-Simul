@@ -2,7 +2,7 @@
 import tkinter as tk
 from tkinter import ttk
 
-from consts import SAFE, LOST, LEAKED, STOLEN
+from consts import SAFE, LOST, LEAKED, STOLEN, KeyStates, KeyStateString
 from wallet_state import WalletState
 from wallet_enumerations import oneBitIndices, walletStr
 import optimal_symmetric_wallets
@@ -67,9 +67,17 @@ def run_visualizer(key_count: int = 4, probabilities: dict | None = None, base_w
     root.title("Wallet Bitmask Visualizer")
     root.geometry("800x600")
 
+    probs_str = "  |  ".join(
+        f"{KeyStateString[k]}: {probabilities[k]:.4f}"
+        for k in KeyStates
+        if k in probabilities
+    )
+    probs_label = ttk.Label(root, text=f"Probabilities:  {probs_str}", font=("", 10))
+    probs_label.pack(pady=(10, 2))
+
     prob_var = tk.StringVar(value="Success probability: 0.000000")
     prob_label = ttk.Label(root, textvariable=prob_var, font=("", 14))
-    prob_label.pack(pady=10)
+    prob_label.pack(pady=(2, 10))
 
     delta_var = tk.StringVar(value="")
     delta_label = ttk.Label(root, textvariable=delta_var, font=("", 10))
