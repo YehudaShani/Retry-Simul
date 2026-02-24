@@ -1,7 +1,13 @@
 """Tkinter desktop app for visualizing wallet bitmasks and success probability."""
+import json
 import tkinter as tk
+from tkinter import messagebox
+from pathlib import Path
 from tkinter import ttk
+from tkinter.simpledialog import askstring
 from typing import Literal
+
+SAVED_PROBABILITIES_FILE = Path("saved_probabilities_list.json")
 
 from consts import SAFE, LOST, LEAKED, STOLEN, KeyStates, KeyStateString
 from wallet_state import WalletState
@@ -97,6 +103,28 @@ def run_visualizer(
 
     optimal_subtitle_label = ttk.Label(root, text=optimal_str, font=("", 10), wraplength=760)
     optimal_subtitle_label.pack(pady=(0, 10))
+
+    def on_save():
+        message = askstring("Save probabilities", "Message (optional):", parent=root)
+        if message is None:
+            return  # user cancelled
+        probs_dict = {KeyStateString[k]: probabilities[k] for k in KeyStates if k in probabilities}
+        entry = {
+            "key_count": key_count,
+            "probabilities": probs_dict,
+            "message": message,
+        }
+        try:
+            data = []
+            if SAVED_PROBABILITIES_FILE.exists():
+                data = json.loads(SAVED_PROBABILITIES_FILE.read_text())
+            data.append(entry)
+            SAVED_PROBABILITIES_FILE.write_text(json.dumps(data, indent=2))
+        except (json.JSONDecodeError, OSError) as e:
+            messagebox.showerror("Save failed", str(e), parent=root)
+
+    save_btn = ttk.Button(root, text="Save probabilities", command=on_save)
+    save_btn.pack(pady=(0, 8))
 
     canvas_frame = ttk.Frame(root)
     canvas_frame.pack(fill=tk.BOTH, expand=True)
@@ -247,4 +275,4 @@ def run_visualizer(
 
 if __name__ == "__main__":
     # Check these probabilities with previous symmetric, then with normal symmetric
-    run_visualizer(key_count=6, probabilities={1: 0.56, 2: 0.12, 3: 0.12, 4: 0.2})
+    run_visualizer(key_count=5, probabilities={1: 0.36, 2: 0.12, 3: 0.22, 4: 0.3}, orientation="columns")

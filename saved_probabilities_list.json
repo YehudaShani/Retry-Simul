@@ -1,0 +1,12 @@
+[
+  {
+    "key_count": 5,
+    "probabilities": {
+      "SAFE": 0.36,
+      "LOST": 0.12,
+      "LEAKED": 0.22,
+      "STOLEN": 0.3
+    },
+    "message": "very asymmetrical - optimal symmetrical is lower than psafe"
+  }
+]
