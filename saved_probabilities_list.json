@@ -8,5 +8,25 @@
       "STOLEN": 0.3
     },
     "message": "very asymmetrical - optimal symmetrical is lower than psafe"
+  },
+  {
+    "key_count": 5,
+    "probabilities": {
+      "SAFE": 0.31,
+      "LOST": 0.29,
+      "LEAKED": 0.1,
+      "STOLEN": 0.3
+    },
+    "message": "Very assymetrical, symmetric optimal < psafe"
+  },
+  {
+    "key_count": 5,
+    "probabilities": {
+      "SAFE": 0.31,
+      "LOST": 0.27,
+      "LEAKED": 0.13,
+      "STOLEN": 0.29
+    },
+    "message": ""
   }
 ]

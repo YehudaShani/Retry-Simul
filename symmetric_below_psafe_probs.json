@@ -1,0 +1,233 @@
+[
+  {
+    "probabilities": {
+      "SAFE": 0.42,
+      "LOST": 0.17,
+      "LEAKED": 0.0,
+      "STOLEN": 0.41
+    },
+    "keyCount": 5,
+    "optimal_threshold": 3,
+    "optimal_success": 0.35254033919999994
+  },
+  {
+    "probabilities": {
+      "SAFE": 0.33,
+      "LOST": 0.26,
+      "LEAKED": 0.13,
+      "STOLEN": 0.28
+    },
+    "keyCount": 5,
+    "optimal_threshold": 3,
+    "optimal_success": 0.32117661180000007
+  },
+  {
+    "probabilities": {
+      "SAFE": 0.39,
+      "LOST": 0.02,
+      "LEAKED": 0.25,
+      "STOLEN": 0.34
+    },
+    "keyCount": 5,
+    "optimal_threshold": 4,
+    "optimal_success": 0.35230157040000004
+  },
+  {
+    "probabilities": {
+      "SAFE": 0.44,
+      "LOST": 0.09,
+      "LEAKED": 0.1,
+      "STOLEN": 0.37
+    },
+    "keyCount": 5,
+    "optimal_threshold": 3,
+    "optimal_success": 0.4382574944
+  },
+  {
+    "probabilities": {
+      "SAFE": 0.45,
+      "LOST": 0.02,
+      "LEAKED": 0.12,
+      "STOLEN": 0.41
+    },
+    "keyCount": 5,
+    "optimal_threshold": 3,
+    "optimal_success": 0.420947685
+  },
+  {
+    "probabilities": {
+      "SAFE": 0.46,
+      "LOST": 0.03,
+      "LEAKED": 0.19,
+      "STOLEN": 0.32
+    },
+    "keyCount": 5,
+    "optimal_threshold": 3,
+    "optimal_success": 0.45688564360000006
+  },
+  {
+    "probabilities": {
+      "SAFE": 0.31,
+      "LOST": 0.16,
+      "LEAKED": 0.23,
+      "STOLEN": 0.3
+    },
+    "keyCount": 5,
+    "optimal_threshold": 3,
+    "optimal_success": 0.2941872286
+  },
+  {
+    "probabilities": {
+      "SAFE": 0.37,
+      "LOST": 0.02,
+      "LEAKED": 0.26,
+      "STOLEN": 0.35
+    },
+    "keyCount": 5,
+    "optimal_threshold": 4,
+    "optimal_success": 0.3270553432
+  },
+  {
+    "probabilities": {
+      "SAFE": 0.47,
+      "LOST": 0.04,
+      "LEAKED": 0.05,
+      "STOLEN": 0.44
+    },
+    "keyCount": 5,
+    "optimal_threshold": 3,
+    "optimal_success": 0.4567976341999999
+  },
+  {
+    "probabilities": {
+      "SAFE": 0.37,
+      "LOST": 0.01,
+      "LEAKED": 0.26,
+      "STOLEN": 0.36
+    },
+    "keyCount": 5,
+    "optimal_threshold": 4,
+    "optimal_success": 0.3257547192
+  },
+  {
+    "probabilities": {
+      "SAFE": 0.31,
+      "LOST": 0.29,
+      "LEAKED": 0.1,
+      "STOLEN": 0.3
+    },
+    "keyCount": 5,
+    "optimal_threshold": 3,
+    "optimal_success": 0.2671515706
+  },
+  {
+    "probabilities": {
+      "SAFE": 0.47,
+      "LOST": 0.04,
+      "LEAKED": 0.03,
+      "STOLEN": 0.46
+    },
+    "keyCount": 5,
+    "optimal_threshold": 3,
+    "optimal_success": 0.45177803419999996
+  },
+  {
+    "probabilities": {
+      "SAFE": 0.41,
+      "LOST": 0.02,
+      "LEAKED": 0.18,
+      "STOLEN": 0.39
+    },
+    "keyCount": 5,
+    "optimal_threshold": 3,
+    "optimal_success": 0.3528106825999999
+  },
+  {
+    "probabilities": {
+      "SAFE": 0.42,
+      "LOST": 0.03,
+      "LEAKED": 0.22,
+      "STOLEN": 0.33
+    },
+    "keyCount": 5,
+    "optimal_threshold": 3,
+    "optimal_success": 0.3848729472
+  },
+  {
+    "probabilities": {
+      "SAFE": 0.42,
+      "LOST": 0.23,
+      "LEAKED": 0.03,
+      "STOLEN": 0.32
+    },
+    "keyCount": 5,
+    "optimal_threshold": 3,
+    "optimal_success": 0.38600354519999996
+  },
+  {
+    "probabilities": {
+      "SAFE": 0.44,
+      "LOST": 0.07,
+      "LEAKED": 0.1,
+      "STOLEN": 0.39
+    },
+    "keyCount": 5,
+    "optimal_threshold": 3,
+    "optimal_success": 0.42784533440000005
+  },
+  {
+    "probabilities": {
+      "SAFE": 0.39,
+      "LOST": 0.05,
+      "LEAKED": 0.21,
+      "STOLEN": 0.35
+    },
+    "keyCount": 5,
+    "optimal_threshold": 3,
+    "optimal_success": 0.3475933344
+  },
+  {
+    "probabilities": {
+      "SAFE": 0.31,
+      "LOST": 0.27,
+      "LEAKED": 0.13,
+      "STOLEN": 0.29
+    },
+    "keyCount": 5,
+    "optimal_threshold": 3,
+    "optimal_success": 0.2871864676
+  },
+  {
+    "probabilities": {
+      "SAFE": 0.44,
+      "LOST": 0.0,
+      "LEAKED": 0.21,
+      "STOLEN": 0.35
+    },
+    "keyCount": 5,
+    "optimal_threshold": 4,
+    "optimal_success": 0.3918007104
+  },
+  {
+    "probabilities": {
+      "SAFE": 0.41,
+      "LOST": 0.05,
+      "LEAKED": 0.25,
+      "STOLEN": 0.29
+    },
+    "keyCount": 5,
+    "optimal_threshold": 4,
+    "optimal_success": 0.3950225195999999
+  },
+  {
+    "probabilities": {
+      "SAFE": 0.41,
+      "LOST": 0.24,
+      "LEAKED": 0.03,
+      "STOLEN": 0.32
+    },
+    "keyCount": 5,
+    "optimal_threshold": 2,
+    "optimal_success": 0.3787370735999999
+  }
+]

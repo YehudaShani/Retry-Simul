@@ -14,6 +14,39 @@ from wallet_state import WalletState
 from wallet_enumerations import oneBitIndices, walletStr
 import optimal_symmetric_wallets
 
+NAME_TO_CONST = {"SAFE": SAFE, "LOST": LOST, "LEAKED": LEAKED, "STOLEN": STOLEN}
+
+
+def _normalize_probs(probs: dict) -> dict:
+    """Convert string keys like 'SAFE' to consts; leave int keys as-is."""
+    return {NAME_TO_CONST.get(k, k): v for k, v in probs.items()}
+
+
+def _normalize_json_item(item: dict) -> tuple[int, dict, str]:
+    """
+    Normalize a single item from a probabilities/params JSON list.
+    Returns (key_count, probabilities, extra_subtitle).
+    Works with probabilities-only, or items that include keyCount, optimal_*, message, etc.
+    """
+    probs_raw = item.get("probabilities") if isinstance(item, dict) and "probabilities" in item else item
+    if isinstance(probs_raw, dict):
+        if not any(k in (SAFE, LOST, LEAKED, STOLEN) for k in probs_raw):
+            probs = _normalize_probs(probs_raw)
+        else:
+            probs = probs_raw
+    else:
+        probs = {SAFE: 0.25, LOST: 0.25, LEAKED: 0.25, STOLEN: 0.25}
+    key_count = item.get("keyCount") or item.get("key_count") or 4
+    extra_parts = []
+    if "optimal_threshold" in item:
+        extra_parts.append(f"optimal_threshold: {item['optimal_threshold']}")
+    if "optimal_success" in item:
+        extra_parts.append(f"optimal_success: {item['optimal_success']:.6f}")
+    if "message" in item:
+        extra_parts.append(str(item["message"]))
+    extra_subtitle = "  |  ".join(extra_parts) if extra_parts else ""
+    return key_count, probs, extra_subtitle
+
 
 def _bitmask_label(bitmask: int) -> str:
     """Human-readable label for a bitmask, e.g. (1 ∧ 2)."""
@@ -33,23 +66,15 @@ def _group_bitmasks_by_key_count(key_count: int):
     return groups
 
 
-def run_visualizer(
-    key_count: int = 4,
-    probabilities: dict | None = None,
+def _build_visualizer_content(
+    parent: tk.Widget,
+    key_count: int,
+    probabilities: dict,
     base_wallet=None,
     orientation: Literal["rows", "columns"] = "rows",
+    extra_subtitle: str = "",
 ):
-    if orientation not in {"rows", "columns"}:
-        raise ValueError(f"orientation must be 'rows' or 'columns', got: {orientation!r}")
-
-    if probabilities is None:
-        probabilities = {
-            SAFE: 0.25,
-            LOST: 0.25,
-            LEAKED: 0.25,
-            STOLEN: 0.25,
-        }
-
+    """Build the full visualizer UI (probability label, canvas, bitmask buttons) inside parent."""
     if base_wallet is None:
         ws = WalletState(key_count, [], probabilities)
     else:
@@ -61,6 +86,8 @@ def run_visualizer(
         key_count, probabilities
     )
     symmetric_optimal_str = f"Symmetric optimal: {opt_threshold}-of-{key_count}" if opt_wallet else "Symmetric optimal: N/A"
+    if extra_subtitle:
+        symmetric_optimal_str = symmetric_optimal_str + "  |  " + extra_subtitle
 
     optimal_wallet_states = ws.return_optimal_wallet_for_probability()
     optimal_success_prob = optimal_wallet_states[0].compute_success_probability() if optimal_wallet_states else 0.0
@@ -78,34 +105,32 @@ def run_visualizer(
             walletStr(w.bitmasks) for w in optimal_wallet_states
         ) + f" (success: {optimal_success_prob:.6f})"
 
-    root = tk.Tk()
-    root.title("Wallet Bitmask Visualizer")
-    root.geometry("800x600")
-
     probs_str = "  |  ".join(
         f"{KeyStateString[k]}: {probabilities[k]:.4f}"
         for k in KeyStates
         if k in probabilities
     )
-    probs_label = ttk.Label(root, text=f"Probabilities:  {probs_str}", font=("", 10))
+    probs_label = ttk.Label(parent, text=f"Probabilities:  {probs_str}", font=("", 10))
     probs_label.pack(pady=(10, 2))
 
     prob_var = tk.StringVar(value="Success probability: 0.000000")
-    prob_label = ttk.Label(root, textvariable=prob_var, font=("", 14))
+    prob_label = ttk.Label(parent, textvariable=prob_var, font=("", 14))
     prob_label.pack(pady=(2, 10))
 
     delta_var = tk.StringVar(value="")
-    delta_label = ttk.Label(root, textvariable=delta_var, font=("", 10))
+    delta_label = ttk.Label(parent, textvariable=delta_var, font=("", 10))
     delta_label.pack(pady=(0, 4))
 
-    subtitle_label = ttk.Label(root, text=symmetric_optimal_str, font=("", 10), wraplength=760)
+    subtitle_label = ttk.Label(parent, text=symmetric_optimal_str, font=("", 10), wraplength=760)
     subtitle_label.pack(pady=(0, 4))
 
-    optimal_subtitle_label = ttk.Label(root, text=optimal_str, font=("", 10), wraplength=760)
+    optimal_subtitle_label = ttk.Label(parent, text=optimal_str, font=("", 10), wraplength=760)
     optimal_subtitle_label.pack(pady=(0, 10))
 
+    toplevel = parent.winfo_toplevel()
+
     def on_save():
-        message = askstring("Save probabilities", "Message (optional):", parent=root)
+        message = askstring("Save probabilities", "Message (optional):", parent=toplevel)
         if message is None:
             return  # user cancelled
         probs_dict = {KeyStateString[k]: probabilities[k] for k in KeyStates if k in probabilities}
@@ -121,12 +146,12 @@ def run_visualizer(
             data.append(entry)
             SAVED_PROBABILITIES_FILE.write_text(json.dumps(data, indent=2))
         except (json.JSONDecodeError, OSError) as e:
-            messagebox.showerror("Save failed", str(e), parent=root)
+            messagebox.showerror("Save failed", str(e), parent=toplevel)
 
-    save_btn = ttk.Button(root, text="Save probabilities", command=on_save)
+    save_btn = ttk.Button(parent, text="Save probabilities", command=on_save)
     save_btn.pack(pady=(0, 8))
 
-    canvas_frame = ttk.Frame(root)
+    canvas_frame = ttk.Frame(parent)
     canvas_frame.pack(fill=tk.BOTH, expand=True)
 
     canvas = tk.Canvas(canvas_frame)
@@ -270,9 +295,97 @@ def run_visualizer(
 
     refresh_all_buttons()
     update_probability()
+
+
+def run_visualizer(
+    key_count: int = 4,
+    probabilities: dict | None = None,
+    base_wallet=None,
+    orientation: Literal["rows", "columns"] = "rows",
+):
+    """Run the wallet visualizer in a new window."""
+    if orientation not in {"rows", "columns"}:
+        raise ValueError(f"orientation must be 'rows' or 'columns', got: {orientation!r}")
+    if probabilities is None:
+        probabilities = {
+            SAFE: 0.25,
+            LOST: 0.25,
+            LEAKED: 0.25,
+            STOLEN: 0.25,
+        }
+    root = tk.Tk()
+    root.title("Wallet Bitmask Visualizer")
+    root.geometry("800x600")
+    _build_visualizer_content(root, key_count, probabilities, base_wallet, orientation)
+    root.mainloop()
+
+
+def run_visualizer_from_json(json_path: str):
+    """
+    Load a JSON file of probability/parameter entries (list of objects) and run the visualizer
+    with Prev/Next buttons to step through the list one by one.
+    Each entry can have: probabilities, keyCount/key_count, optimal_threshold, optimal_success, message, etc.
+    """
+    with open(json_path, encoding="utf-8") as f:
+        data = json.load(f)
+    if not isinstance(data, list):
+        data = [data]
+    if not data:
+        raise ValueError("JSON file must contain a non-empty list of entries")
+
+    normalized = [_normalize_json_item(item) for item in data]
+
+    root = tk.Tk()
+    root.title(f"Wallet Visualizer — {json_path}")
+    root.geometry("800x680")
+
+    nav_frame = ttk.Frame(root)
+    nav_frame.pack(fill=tk.X, padx=10, pady=8)
+
+    current_index = tk.IntVar(value=0)
+    total = len(normalized)
+
+    def go_prev():
+        i = current_index.get()
+        if i > 0:
+            current_index.set(i - 1)
+            show_current()
+
+    def go_next():
+        i = current_index.get()
+        if i < total - 1:
+            current_index.set(i + 1)
+            show_current()
+
+    index_label = ttk.Label(nav_frame, text="", font=("", 11))
+    index_label.pack(side=tk.LEFT, padx=(0, 20))
+
+    def update_index_label():
+        index_label.config(text=f"Item {current_index.get() + 1} / {total}")
+
+    content_frame = ttk.Frame(root)
+    content_frame.pack(fill=tk.BOTH, expand=True)
+
+    def show_current():
+        for w in content_frame.winfo_children():
+            w.destroy()
+        i = current_index.get()
+        key_count, probs, extra_subtitle = normalized[i]
+        _build_visualizer_content(
+            content_frame, key_count, probs,
+            extra_subtitle=extra_subtitle,
+            orientation="columns",
+        )
+        update_index_label()
+
+    ttk.Button(nav_frame, text="← Prev", command=go_prev).pack(side=tk.LEFT, padx=2)
+    ttk.Button(nav_frame, text="Next →", command=go_next).pack(side=tk.LEFT, padx=2)
+    update_index_label()
+    show_current()
     root.mainloop()
 
 
 if __name__ == "__main__":
     # Check these probabilities with previous symmetric, then with normal symmetric
-    run_visualizer(key_count=5, probabilities={1: 0.36, 2: 0.12, 3: 0.22, 4: 0.3}, orientation="columns")
+    #run_visualizer(key_count=5, probabilities={1: 0.36, 2: 0.12, 3: 0.22, 4: 0.3}, orientation="columns")
+    run_visualizer_from_json("saved_probabilities_list.json")
