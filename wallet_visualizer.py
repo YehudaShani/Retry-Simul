@@ -13,6 +13,7 @@ from consts import SAFE, LOST, LEAKED, STOLEN, KeyStates, KeyStateString
 from wallet_state import WalletState
 from wallet_enumerations import oneBitIndices, walletStr
 import optimal_symmetric_wallets
+import wallet_cache
 
 NAME_TO_CONST = {"SAFE": SAFE, "LOST": LOST, "LEAKED": LEAKED, "STOLEN": STOLEN}
 
@@ -89,21 +90,24 @@ def _build_visualizer_content(
     if extra_subtitle:
         symmetric_optimal_str = symmetric_optimal_str + "  |  " + extra_subtitle
 
-    optimal_wallet_states = ws.return_optimal_wallet_for_probability()
-    optimal_success_prob = optimal_wallet_states[0].compute_success_probability() if optimal_wallet_states else 0.0
-    is_unique_and_symmetric = (
-        len(optimal_wallet_states) == 1
-        and opt_wallet is not None
-        and set(optimal_wallet_states[0].bitmasks) == set(opt_wallet)
-    )
-    if is_unique_and_symmetric:
-        optimal_str = f"Optimal: optimal symmetric wallet (success: {optimal_success_prob:.6f})"
-    elif len(optimal_wallet_states) == 1:
-        optimal_str = f"Optimal: {walletStr(optimal_wallet_states[0].bitmasks)} (success: {optimal_success_prob:.6f})"
+    if wallet_cache.has_cached_wallets(key_count):
+        optimal_wallet_states = ws.return_optimal_wallet_for_probability()
+        optimal_success_prob = optimal_wallet_states[0].compute_success_probability() if optimal_wallet_states else 0.0
+        is_unique_and_symmetric = (
+            len(optimal_wallet_states) == 1
+            and opt_wallet is not None
+            and set(optimal_wallet_states[0].bitmasks) == set(opt_wallet)
+        )
+        if is_unique_and_symmetric:
+            optimal_str = f"Optimal: optimal symmetric wallet (success: {optimal_success_prob:.6f})"
+        elif len(optimal_wallet_states) == 1:
+            optimal_str = f"Optimal: {walletStr(optimal_wallet_states[0].bitmasks)} (success: {optimal_success_prob:.6f})"
+        else:
+            optimal_str = f"Optimal ({len(optimal_wallet_states)}): " + "; ".join(
+                walletStr(w.bitmasks) for w in optimal_wallet_states
+            ) + f" (success: {optimal_success_prob:.6f})"
     else:
-        optimal_str = f"Optimal ({len(optimal_wallet_states)}): " + "; ".join(
-            walletStr(w.bitmasks) for w in optimal_wallet_states
-        ) + f" (success: {optimal_success_prob:.6f})"
+        optimal_str = f"Optimal: N/A (no wallet cache for key_count={key_count})"
 
     probs_str = "  |  ".join(
         f"{KeyStateString[k]}: {probabilities[k]:.4f}"
@@ -387,5 +391,5 @@ def run_visualizer_from_json(json_path: str):
 
 if __name__ == "__main__":
     # Check these probabilities with previous symmetric, then with normal symmetric
-    #run_visualizer(key_count=5, probabilities={1: 0.36, 2: 0.12, 3: 0.22, 4: 0.3}, orientation="columns")
-    run_visualizer_from_json("saved_probabilities_list.json")
+    run_visualizer(key_count=6, probabilities={1: 0.36, 2: 0.12, 3: 0.22, 4: 0.3}, orientation="columns")
+    #run_visualizer_from_json("saved_probabilities_list.json")

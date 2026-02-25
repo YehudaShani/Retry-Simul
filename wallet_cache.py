@@ -12,6 +12,11 @@ def _cache_path(key_count: int) -> Path:
     return _CACHE_DIR / f"wallets_{key_count}.json"
 
 
+def has_cached_wallets(key_count: int) -> bool:
+    """Return True if a pre-computed wallet cache exists for this key_count (no enumeration)."""
+    return key_count in _CACHED_KEY_COUNTS and _cache_path(key_count).exists()
+
+
 def get_cached_static_wallets(
     key_count: int, deduplicate_by_architecture: bool = True
 ) -> list[list[int]]:
