@@ -57,11 +57,11 @@ def check_if_adding_comb_after_optimal_threshold_increases_success_probability()
         owner_states, adversary_states = wallet_enumerations.ownerAdvKeysFromStates(states)
         optimal_symmetric_wallet, optimal_success_probability, optimal_threshold = optimal_symmetric_wallets.find_optimal_symmetric_wallets(
             keyCount, probability)
-        if optimal_threshold <= 2:
+        if optimal_threshold >= keyCount:
             continue
-        next_layer_symmetric_wallet = symmetric_wallet(keyCount, optimal_threshold - 1)
+        next_layer_symmetric_wallet = symmetric_wallet(keyCount, optimal_threshold + 1)
         wallet = wallet_state.WalletState(keyCount, next_layer_symmetric_wallet, probability)
-        new_bitmask = generate_single_bitmask(optimal_threshold - 2)
+        new_bitmask = generate_single_bitmask(optimal_threshold + 1)
         wallet.add_bitmask(new_bitmask)
         new_success_probability = wallet.compute_success_probability()
         if new_success_probability > optimal_success_probability:
@@ -85,7 +85,7 @@ def check_if_adding_combs_to_symmetric_wallet_relative_to_optimal_symmetric(symm
 
     keyCount = 7
     probabilities = computations.generateKeyFaultProbabilityScenarios(step=0.01)
-    probabilities = random.sample(probabilities, 200)
+    probabilities = random.sample(probabilities, 2000)
     #probabilities = [{1: 0.14, 2: 0.02, 3: 0.78, 4: 0.06}]
     for probability in probabilities:
         print(f"Processing probability {probability}")
@@ -104,6 +104,7 @@ def check_if_adding_combs_to_symmetric_wallet_relative_to_optimal_symmetric(symm
             success_probability_without_bitmask = base_wallet.compute_success_probability()
             base_wallet.add_bitmask(bitmask_to_remove)
             success_probability_with_bitmask = base_wallet.compute_success_probability()
+            print(f"The difference in success probability is {success_probability_with_bitmask - success_probability_without_bitmask}")
             if success_probability_with_bitmask < success_probability_without_bitmask:
                 print("The optimal symmetric threshold is", optimal_threshold, " with bitmasks ", )
                 print("with success probability: ", optimal_success_probability)
@@ -183,6 +184,89 @@ def check_if_every_added_combination_to_or_wallet_increases_success_probability(
                 print("--------------------------------")
                 break
 
+def check_adding_on_borders(): 
+    keyCount = 7
+    probabilities = computations.generateKeyFaultProbabilityScenarios(step=0.0025)
+    probabilities = random.sample(probabilities, 2000)
+    for probability in probabilities:
+        print(f"Processing probability {probability}")
+        for layer in range(keyCount - 1, 1, -1):
+            symmetric_k_wallet = symmetric_wallet(keyCount, layer)
+
+            # check if adding the last bitmask increased success
+            wallet_without_last_bitmask = wallet_state.WalletState(keyCount, symmetric_k_wallet, probability)
+            wallet_without_last_bitmask.remove_bitmask_and_subsets(generate_single_bitmask(layer)) # should do the same as removing just one
+            success_probability_without_last_bitmask = wallet_without_last_bitmask.compute_success_probability()
+
+            wallet_with_last_bitmask = wallet_state.WalletState(keyCount, symmetric_k_wallet, probability)
+            success_probability_with_last_bitmask = wallet_with_last_bitmask.compute_success_probability()
+
+            wallet_with_extra_bitmask = wallet_state.WalletState(keyCount, symmetric_k_wallet, probability)
+            wallet_with_extra_bitmask.add_bitmask(generate_single_bitmask(layer - 1))
+            success_probability_with_extra_bitmask = wallet_with_extra_bitmask.compute_success_probability()
+
+            k_layer_improved = success_probability_with_last_bitmask > success_probability_without_last_bitmask
+            k_minus_one_layer_improved = success_probability_with_extra_bitmask > success_probability_with_last_bitmask
+
+            if not k_layer_improved and k_minus_one_layer_improved:
+                print(f"The probability {probability} is a counterexample, on layer {layer}")
+                return probability, layer
+
+
+def check_if_symmetric_wallets_are_concave(
+    keyCount=7,
+    step=0.01,
+    sample_size=2000,
+    tol=1e-12,
+):
+    """Check whether symmetric-wallet success is concave in the threshold.
+
+    For each sampled probability scenario, compute the success sequence
+    S(1), S(2), ..., S(keyCount), where S(k) is the success probability of the
+    k-of-n symmetric wallet. Concavity means:
+
+        S(k - 1) - 2 * S(k) + S(k + 1) <= 0
+
+    for every interior threshold k.
+
+    Returns:
+        None if no counterexample is found.
+        Otherwise returns a tuple:
+        (probability, middle_threshold, success_by_threshold, second_difference)
+    """
+    probabilities = computations.generateKeyFaultProbabilityScenarios(step=step)
+    probabilities = random.sample(probabilities, min(sample_size, len(probabilities)))
+
+    for probability in probabilities:
+        print(f"Processing probability {probability}")
+        states, state_probabilities = wallet_enumerations.enumerateStates(keyCount, probability)
+        owner_states, adversary_states = wallet_enumerations.ownerAdvKeysFromStates(states)
+
+        success_by_threshold = []
+        for threshold in range(1, keyCount + 1):
+            wallet = symmetric_wallet(keyCount, threshold)
+            success_probability = computations.computeSuccessProbability(
+                wallet, owner_states, adversary_states, state_probabilities
+            )
+            success_by_threshold.append(success_probability)
+
+        for idx in range(1, keyCount - 1):
+            left = success_by_threshold[idx - 1]
+            middle = success_by_threshold[idx]
+            right = success_by_threshold[idx + 1]
+            second_difference = left - 2 * middle + right
+
+            if second_difference > tol:
+                middle_threshold = idx + 1
+                print(f"Concavity failed for probability {probability}")
+                print(f"At middle threshold {middle_threshold}")
+                print(f"Success sequence: {success_by_threshold}")
+                print(f"Second difference: {second_difference}")
+                return probability, middle_threshold, success_by_threshold, second_difference
+
+    print("No concavity counterexample found.")
+    return None
+
 
 def check_L_ratio_R_ratio():
     keyCount = 3
@@ -220,3 +304,10 @@ def check_L_ratio_R_ratio():
         print(f"The ratio of R_top to R_bottom is {R_ratio}")
         if L_ratio < R_ratio:
             return
+
+def main(): 
+     check_if_symmetric_wallets_are_concave()
+
+
+if __name__ == "__main__":
+    main()

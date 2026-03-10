@@ -28,5 +28,65 @@
       "STOLEN": 0.29
     },
     "message": ""
+  },
+  {
+    "key_count": 6,
+    "probabilities": {
+      "SAFE": 0.76,
+      "LOST": 0.21,
+      "LEAKED": 0.01,
+      "STOLEN": 0.02
+    },
+    "message": "Example that subwallets are suboptimal"
+  },
+  {
+    "key_count": 6,
+    "probabilities": {
+      "SAFE": 0.04,
+      "LOST": 0.68,
+      "LEAKED": 0.26,
+      "STOLEN": 0.02
+    },
+    "message": "apparently removing on layer 5 anda lowing non monotonic is better than 4 optimal"
+  },
+  {
+    "key_count": 7,
+    "probabilities": {
+      "SAFE": 0.19,
+      "LOST": 0.455,
+      "LEAKED": 0.185,
+      "STOLEN": 0.17
+    },
+    "message": "apparently contradicts assumption that sequantial adding changes directions only once"
+  },
+  {
+    "key_count": 7,
+    "probabilities": {
+      "SAFE": 0.17,
+      "LOST": 0.35,
+      "LEAKED": 0.35,
+      "STOLEN": 0.13
+    },
+    "message": "another counterexample to sequential"
+  },
+  {
+    "key_count": 7,
+    "probabilities": {
+      "SAFE": 0.14,
+      "LOST": 0.23,
+      "LEAKED": 0.495,
+      "STOLEN": 0.135
+    },
+    "message": "another xounterexample for sequential"
+  },
+  {
+    "key_count": 7,
+    "probabilities": {
+      "SAFE": 0.16,
+      "LOST": 0.4925,
+      "LEAKED": 0.215,
+      "STOLEN": 0.1325
+    },
+    "message": "another counterexample for sequential"
   }
 ]

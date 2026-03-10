@@ -11,16 +11,23 @@ import json
 import constrained_probabilities
 import experiments
 import wallet_visualizer
+from plot_utils import plot_symmetric_success_wallets
 
 
 
 def main():
-    result = experiments.check_if_adding_combs_to_symmetric_wallet_relative_to_optimal_symmetric(0, 1)
+    result = experiments.check_if_symmetric_wallets_are_concave()
     if result is None:
         print("No result found")
     else:
-        key_count, probabilities, wallet = result
-        wallet_visualizer.run_visualizer(key_count, probabilities, wallet)
+        probability, middle_threshold, success_by_threshold, second_difference = result
+        print(f"Counterexample probability: {probability}")
+        print(f"Middle threshold: {middle_threshold}")
+        print(f"Second difference: {second_difference}")
+        plot_symmetric_success_wallets(
+            success_by_threshold,
+            title=f"Concavity counterexample at threshold {middle_threshold}",
+        )
 
 
 if __name__ == "__main__":

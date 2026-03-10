@@ -91,12 +91,13 @@ def probability_both_have_same_bitmasks(
     Returns:
         Sum over bitmasks of (p_leak)^popcount(b) * (1 - p_leak)^(n - popcount(b))
     """
-    p_leak = probabilities.get(LEAKED, 0.0)
-    p_not_leak = 1.0 - p_leak
+    states, state_probabilities = enumerateStates(key_count, probabilities)
+    owner_states, adv_states = ownerAdvKeysFromStates(states)
+    bitmasks_set = set(bitmasks)
     total = 0.0
-    for b in bitmasks:
-        k = b.bit_count()
-        total += (p_leak ** k) * (p_not_leak ** (key_count - k))
+    for i, (owner_state, adv_state) in enumerate(zip(owner_states, adv_states)):
+        if owner_state in bitmasks_set and adv_state in bitmasks_set:
+            total += state_probabilities[i]
     return total
 
 
@@ -113,10 +114,10 @@ def total_change_when_adding_bitmask(
             bitmasks_to_remove.add(bitmask)
     for bitmask in bitmasks_to_remove:
         bitmasks.remove(bitmask)
+    
+    p_user_has_specific_bitmasks = probability_user_has_specific_bitmasks(wallet_state.probabilities, wallet_state.key_count, bitmasks)
+    p_attacker_has_bitmasks_and_user_accepted = probability_attacker_has_bitmasks_and_user_accepted(wallet_state, bitmasks)
+    p_user_has_bitmasks_and_attacker_accepted = probability_user_has_bitmasks_and_attacker_accepted(wallet_state, bitmasks)
+    p_both_have_same_bitmasks = probability_both_have_same_bitmasks(wallet_state.probabilities, wallet_state.key_count, bitmasks)
 
-    return (
-        probability_user_has_specific_bitmasks(wallet_state.probabilities, wallet_state.key_count, bitmasks) 
-        - probability_attacker_has_bitmasks_and_user_accepted(wallet_state, bitmasks)
-        - probability_user_has_bitmasks_and_attacker_accepted(wallet_state, bitmasks)
-        - probability_both_have_same_bitmasks(wallet_state.probabilities, wallet_state.key_count, bitmasks)
-    )
+    return p_user_has_specific_bitmasks - p_attacker_has_bitmasks_and_user_accepted - p_user_has_bitmasks_and_attacker_accepted - p_both_have_same_bitmasks
