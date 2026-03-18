@@ -88,5 +88,35 @@
       "STOLEN": 0.1325
     },
     "message": "another counterexample for sequential"
+  },
+  {
+    "key_count": 6,
+    "probabilities": {
+      "SAFE": 0.0551574,
+      "LOST": 0.3148513,
+      "LEAKED": 0.3144053,
+      "STOLEN": 0.315586
+    },
+    "message": "counter-example to main lemma, when theft is larger than safe"
+  },
+  {
+    "key_count": 7,
+    "probabilities": {
+      "SAFE": 0.08,
+      "LOST": 0.44,
+      "LEAKED": 0.47,
+      "STOLEN": 0.01
+    },
+    "message": "might be counterexample to throwing last term "
+  },
+  {
+    "key_count": 7,
+    "probabilities": {
+      "SAFE": 0.09,
+      "LOST": 0.41,
+      "LEAKED": 0.42,
+      "STOLEN": 0.08
+    },
+    "message": "counterexample #2 to disregarding"
   }
 ]

@@ -6,6 +6,57 @@ from wallet_enumerations import enumerateStates, ownerAdvKeysFromStates
 from wallet_state import WalletState
 
 
+def _validate_matching_wallet_models(
+    user_wallet: WalletState,
+    attacker_wallet: WalletState,
+) -> None:
+    """Ensure both wallets are evaluated under the same probability model."""
+    if user_wallet.key_count != attacker_wallet.key_count:
+        raise ValueError("user_wallet and attacker_wallet must have the same key_count")
+    if user_wallet.probabilities != attacker_wallet.probabilities:
+        raise ValueError("user_wallet and attacker_wallet must have identical probabilities")
+
+
+def conditional_wallet_satisfaction_probabilities(
+    user_wallet: WalletState,
+    attacker_wallet: WalletState,
+) -> dict[str, float | None]:
+    """Return joint and conditional acceptance probabilities for two wallets.
+
+    The two wallets must belong to the same experiment model: same key count and
+    same key-state probabilities.
+    """
+    _validate_matching_wallet_models(user_wallet, attacker_wallet)
+
+    states, state_probabilities = enumerateStates(user_wallet.key_count, user_wallet.probabilities)
+    owner_states, adv_states = ownerAdvKeysFromStates(states)
+
+    p_user_satisfies = 0.0
+    p_attacker_satisfies = 0.0
+    p_joint = 0.0
+    for probability, owner_state, adv_state in zip(state_probabilities, owner_states, adv_states):
+        user_ok = user_wallet.bitmask_is_in_wallet(owner_state)
+        attacker_ok = attacker_wallet.bitmask_is_in_wallet(adv_state)
+        if user_ok:
+            p_user_satisfies += probability
+        if attacker_ok:
+            p_attacker_satisfies += probability
+        if user_ok and attacker_ok:
+            p_joint += probability
+
+    return {
+        "joint_probability": p_joint,
+        "p_user_satisfies": p_user_satisfies,
+        "p_attacker_satisfies": p_attacker_satisfies,
+        "user_given_attacker": (
+            p_joint / p_attacker_satisfies if p_attacker_satisfies > 0.0 else None
+        ),
+        "attacker_given_user": (
+            p_joint / p_user_satisfies if p_user_satisfies > 0.0 else None
+        ),
+    }
+
+
 def probability_user_has_specific_bitmasks(
     probabilities: Dict[int, float],
     key_count: int,
@@ -121,3 +172,4 @@ def total_change_when_adding_bitmask(
     p_both_have_same_bitmasks = probability_both_have_same_bitmasks(wallet_state.probabilities, wallet_state.key_count, bitmasks)
 
     return p_user_has_specific_bitmasks - p_attacker_has_bitmasks_and_user_accepted - p_user_has_bitmasks_and_attacker_accepted - p_both_have_same_bitmasks
+

@@ -11,22 +11,28 @@ import json
 import constrained_probabilities
 import experiments
 import wallet_visualizer
-from plot_utils import plot_symmetric_success_wallets
+from plot_utils import plot_key_count_distributions
 
 
 
 def main():
-    result = experiments.check_if_symmetric_wallets_are_concave()
-    if result is None:
-        print("No result found")
-    else:
-        probability, middle_threshold, success_by_threshold, second_difference = result
-        print(f"Counterexample probability: {probability}")
-        print(f"Middle threshold: {middle_threshold}")
-        print(f"Second difference: {second_difference}")
-        plot_symmetric_success_wallets(
-            success_by_threshold,
-            title=f"Concavity counterexample at threshold {middle_threshold}",
+    keyCount = 6
+    probabilities = computations.generateKeyFaultProbabilityScenarios(step=0.05)
+    sampled_probabilities = random.sample(probabilities, min(3, len(probabilities)))
+
+    for index, probability in enumerate(sampled_probabilities, start=1):
+        result = experiments.build_key_count_distributions_with_optimal_threshold(keyCount, probability)
+        title = (
+            f"Scenario {index}/3 | "
+            f"SAFE={probability[SAFE]:.2f}, LOST={probability[LOST]:.2f}, "
+            f"LEAKED={probability[LEAKED]:.2f}, STOLEN={probability[STOLEN]:.2f}"
+        )
+        plot_key_count_distributions(
+            result["user_key_count_probabilities"],
+            result["attacker_key_count_probabilities"],
+            result["success_by_threshold"],
+            result["optimal_threshold"],
+            title=title,
         )
 
 

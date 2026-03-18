@@ -391,5 +391,5 @@ def run_visualizer_from_json(json_path: str):
 
 if __name__ == "__main__":
     # Check these probabilities with previo us symmetric, then with normal symmetric
-    run_visualizer(key_count=7, probabilities={1: 0.19, 2: 0.3275, 3: 0.325, 4: 0.1575}, orientation="columns")
-    #run_visualizer_from_json("saved_probabilities_list.json")
+    #run_visualizer(key_count=6, probabilities={1: 0.125, 2: 0.405, 3: 0.4, 4: 0.07}, orientation="columns")
+    run_visualizer_from_json("saved_probabilities_list.json")

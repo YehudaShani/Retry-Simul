@@ -50,3 +50,129 @@ def plot_symmetric_success_wallets(
         plt.show()
 
     return fig, ax
+
+
+def plot_symmetric_success_with_expected_keys(
+    success_by_threshold: Sequence[float],
+    expected_user_keys: float,
+    expected_attacker_keys: float,
+    title: str = "Symmetric Wallet Success With Expected Keys",
+    show: bool = True,
+    save_path: str | None = None,
+    optimal_threshold: int | None = None,
+    optimal_success: float | None = None,
+):
+    """Plot symmetric-wallet success with expected key-count references.
+
+    Success is shown against threshold, while the expected user and attacker
+    key counts are shown as vertical reference lines on the same axes.
+    """
+    thresholds = list(range(len(success_by_threshold)))
+
+    fig, ax = plt.subplots(figsize=(9, 5))
+    success_line = ax.plot(
+        thresholds,
+        list(success_by_threshold),
+        marker="o",
+        color="tab:blue",
+        label="success probability",
+    )[0]
+    ax.set_xlabel("Threshold")
+    ax.set_ylabel("Success probability")
+    ax.set_title(title)
+    ax.grid(True, alpha=0.3)
+    ax.set_xlim(0, len(thresholds) + 0.5)
+
+    if optimal_threshold is not None:
+        marker_kwargs = {"color": "tab:blue", "s": 60, "zorder": 3, "label": "optimal threshold"}
+        if optimal_success is None:
+            optimal_success = success_by_threshold[optimal_threshold]
+        optimal_marker = ax.scatter([optimal_threshold], [optimal_success], **marker_kwargs)
+    else:
+        optimal_marker = None
+
+    user_line = ax.axvline(
+        expected_user_keys,
+        color="tab:green",
+        linestyle="--",
+        label="expected user keys",
+    )
+    attacker_line = ax.axvline(
+        expected_attacker_keys,
+        color="tab:red",
+        linestyle=":",
+        label="expected attacker keys",
+    )
+
+    legend_handles = [success_line, user_line, attacker_line]
+    if optimal_marker is not None:
+        legend_handles.append(optimal_marker)
+    ax.legend(legend_handles, [handle.get_label() for handle in legend_handles], loc="best")
+
+    if save_path:
+        fig.savefig(Path(save_path), bbox_inches="tight")
+
+    if show:
+        plt.show()
+
+    return fig, ax
+
+
+def plot_key_count_distributions(
+    user_key_count_probabilities: Sequence[float],
+    attacker_key_count_probabilities: Sequence[float],
+    success_by_threshold: Sequence[float],
+    optimal_threshold: int,
+    title: str = "User And Attacker Key-Count Distributions",
+    show: bool = True,
+    save_path: str | None = None,
+):
+    """Plot key-count distributions together with threshold success values."""
+    key_counts = list(range(len(user_key_count_probabilities)))
+    thresholds = list(range(len(success_by_threshold)))
+
+    fig, ax = plt.subplots(figsize=(9, 5))
+    user_line = ax.plot(
+        key_counts,
+        list(user_key_count_probabilities),
+        marker="o",
+        color="tab:green",
+        label="user key-count probability",
+    )[0]
+    attacker_line = ax.plot(
+        key_counts,
+        list(attacker_key_count_probabilities),
+        marker="o",
+        color="tab:red",
+        label="attacker key-count probability",
+    )[0]
+    success_line = ax.plot(
+        thresholds,
+        list(success_by_threshold),
+        marker="o",
+        color="tab:blue",
+        label="threshold success probability",
+    )[0]
+    threshold_line = ax.axvline(
+        optimal_threshold,
+        color="tab:purple",
+        linestyle="--",
+        label="optimal threshold",
+    )
+
+    ax.set_xlabel("Number of keys")
+    ax.set_ylabel("Probability")
+    ax.set_title(title)
+    ax.set_xticks(key_counts)
+    ax.set_xlim(min(key_counts), max(key_counts))
+    ax.grid(True, alpha=0.3)
+    legend_handles = [user_line, attacker_line, success_line, threshold_line]
+    ax.legend(legend_handles, [h.get_label() for h in legend_handles], loc="best")
+
+    if save_path:
+        fig.savefig(Path(save_path), bbox_inches="tight")
+
+    if show:
+        plt.show()
+
+    return fig, ax

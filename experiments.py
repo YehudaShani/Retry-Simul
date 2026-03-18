@@ -9,6 +9,82 @@ import random
 from consts import SAFE, LOST, LEAKED, STOLEN
 
 
+def build_symmetric_success_and_expected_keys(keyCount: int, probability: dict) -> dict:
+    """Compute symmetric-wallet success by threshold and expected user/attacker keys.
+
+    Returns a dictionary with the per-threshold success curve plus expectation
+    values derived from the same enumerated state space.
+    """
+    states, state_probabilities = wallet_enumerations.enumerateStates(keyCount, probability)
+    owner_states, adversary_states = wallet_enumerations.ownerAdvKeysFromStates(states)
+
+    success_by_threshold = [0.0]
+    for threshold in range(1, keyCount + 1):
+        wallet = symmetric_wallet(keyCount, threshold)
+        success_probability = computations.computeSuccessProbability(
+            wallet, owner_states, adversary_states, state_probabilities
+        )
+        success_by_threshold.append(success_probability)
+
+    expected_user_keys = sum(
+        probability * owner_state.bit_count()
+        for probability, owner_state in zip(state_probabilities, owner_states)
+    )
+    expected_attacker_keys = sum(
+        probability * adversary_state.bit_count()
+        for probability, adversary_state in zip(state_probabilities, adversary_states)
+    )
+
+    optimal_success = max(success_by_threshold)
+    optimal_threshold = success_by_threshold.index(optimal_success)
+
+    return {
+        "thresholds": list(range(keyCount + 1)),
+        "success_by_threshold": success_by_threshold,
+        "expected_user_keys": expected_user_keys,
+        "expected_attacker_keys": expected_attacker_keys,
+        "optimal_threshold": optimal_threshold,
+        "optimal_success": optimal_success,
+        "probabilities": probability,
+    }
+
+
+def build_key_count_distributions_with_optimal_threshold(keyCount: int, probability: dict) -> dict:
+    """Compute user/attacker key-count distributions and the optimal threshold."""
+    states, state_probabilities = wallet_enumerations.enumerateStates(keyCount, probability)
+    owner_states, adversary_states = wallet_enumerations.ownerAdvKeysFromStates(states)
+
+    user_key_count_probabilities = [0.0] * (keyCount + 1)
+    attacker_key_count_probabilities = [0.0] * (keyCount + 1)
+    for state_probability, owner_state, adversary_state in zip(
+        state_probabilities, owner_states, adversary_states
+    ):
+        user_key_count_probabilities[owner_state.bit_count()] += state_probability
+        attacker_key_count_probabilities[adversary_state.bit_count()] += state_probability
+
+    success_by_threshold = [0.0]
+    for threshold in range(1, keyCount + 1):
+        wallet = symmetric_wallet(keyCount, threshold)
+        success_probability = computations.computeSuccessProbability(
+            wallet, owner_states, adversary_states, state_probabilities
+        )
+        success_by_threshold.append(success_probability)
+
+    _optimal_wallet, optimal_success, optimal_threshold = optimal_symmetric_wallets.find_optimal_symmetric_wallets(
+        keyCount, probability
+    )
+
+    return {
+        "key_counts": list(range(keyCount + 1)),
+        "user_key_count_probabilities": user_key_count_probabilities,
+        "attacker_key_count_probabilities": attacker_key_count_probabilities,
+        "success_by_threshold": success_by_threshold,
+        "optimal_threshold": optimal_threshold,
+        "optimal_success": optimal_success,
+        "probabilities": probability,
+    }
+
+
 def check_sequential_combinations(counterexample=True):
     keyCount = 5
     probabilities = computations.generateKeyFaultProbabilityScenarios(step=0.02)
@@ -83,7 +159,7 @@ def check_if_adding_combs_to_symmetric_wallet_relative_to_optimal_symmetric(symm
     # combinations of sizes k+2, k+3, ... and their subsets, then checks if adding them increases the success
     # probability.
 
-    keyCount = 7
+    keyCount = 4
     probabilities = computations.generateKeyFaultProbabilityScenarios(step=0.01)
     probabilities = random.sample(probabilities, 2000)
     #probabilities = [{1: 0.14, 2: 0.02, 3: 0.78, 4: 0.06}]
@@ -115,6 +191,50 @@ def check_if_adding_combs_to_symmetric_wallet_relative_to_optimal_symmetric(symm
                 print("--------------------------------")
                 print("--------------------------------")
                 return keyCount, probability, base_wallet
+
+
+def check_if_adding_combs_to_symmetric_wallet_relative_to_optimal_symmetric_extra(symmetric_layer_from_optimal=1,
+                                                                            layer_from_optimal_to_start_checking_combs=1):
+    # Finds the k symmetric optimal, generates a new symmetric wallet with threshold t above the optimal. Removes
+    # combinations of sizes k+2, k+3, ... and their subsets, then checks if adding them increases the success
+    # probability.
+
+    keyCount = 6
+    probabilities = computations.generateKeyFaultProbabilityScenarios(step=0.005)
+    probabilities = random.sample(probabilities, 2000)
+    probabilities = [{1: 0.125, 2: 0.405, 3: 0.4, 4: 0.07}]
+    for probability in probabilities:
+        print(f"Processing probability {probability}")
+        optimal_symmetric_wallet, optimal_success_probability, optimal_threshold = optimal_symmetric_wallets.find_optimal_symmetric_wallets(
+            keyCount, probability)
+        if optimal_threshold + symmetric_layer_from_optimal >= keyCount:
+            continue
+
+        symmetric_wallet_from_optimal = symmetric_wallet(keyCount, optimal_threshold + symmetric_layer_from_optimal)
+        minimum_layer_to_check = min(keyCount, optimal_threshold + layer_from_optimal_to_start_checking_combs)
+
+        for layer in range(minimum_layer_to_check, minimum_layer_to_check + 1):
+            #Calculate probability both have the last bitmask, layer^leak * (keyCount-layer)^lost
+            both_have_last_bitmask_probability = probability[LEAKED] ** layer * (probability[LOST]) ** (keyCount - layer)
+            
+            base_wallet = wallet_state.WalletState(keyCount, symmetric_wallet_from_optimal, probability)
+            bitmask_to_remove = generate_single_bitmask(layer)
+            base_wallet.remove_bitmask_and_subsets(bitmask_to_remove)
+            success_probability_without_bitmask = base_wallet.compute_success_probability()
+            base_wallet.add_bitmask(bitmask_to_remove)
+            success_probability_with_bitmask = base_wallet.compute_success_probability()
+            print(f"The difference in success probability is {success_probability_with_bitmask - success_probability_without_bitmask}")
+            if success_probability_with_bitmask < success_probability_without_bitmask + both_have_last_bitmask_probability:
+                print("The optimal symmetric threshold is", optimal_threshold, " with bitmasks ", )
+                print("with success probability: ", optimal_success_probability)
+                print("The layer we are checking is: ", layer)
+                print("The bitmask is: ", bitmask_to_remove)
+                print("The success probability without the bitmask is: ", success_probability_without_bitmask)
+                print("The success probability with the bitmask is: ", success_probability_with_bitmask)
+                print("--------------------------------")
+                print("--------------------------------")
+                return keyCount, probability, base_wallet
+
 
 
 
@@ -305,8 +425,21 @@ def check_L_ratio_R_ratio():
         if L_ratio < R_ratio:
             return
 
+#def check_gain_breakdown():
+#    keyCount = 7
+#    probabilities = computations.generateKeyFaultProbabilityScenarios(step=0.01)
+#    probabilities = random.sample(probabilities, 200)
+#    for probability in probabilities:
+#        print(f"Processing probability {probability}")
+#        for layer in range(2, keyCount):
+#        symmetric_k_minus_one_wallet = symmetric_wallet(keyCount, layer - 1)
+#        symmetric_k_wallet = symmetric_wallet(keyCount, layer)
+#        symmetric_k_plus_one_wallet = symmetric_wallet(keyCount, layer + 1)
+#
+#        user 
+
 def main(): 
-     check_if_symmetric_wallets_are_concave()
+     check_if_adding_combs_to_symmetric_wallet_relative_to_optimal_symmetric()
 
 
 if __name__ == "__main__":

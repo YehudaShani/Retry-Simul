@@ -6,7 +6,12 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent))
 
 import pytest
 from wallet_state import WalletState
-from gain_breakdown import probability_user_has_bitmasks_and_attacker_accepted, probability_user_has_specific_bitmasks, total_change_when_adding_bitmask
+from gain_breakdown import (
+    conditional_wallet_satisfaction_probabilities,
+    probability_user_has_bitmasks_and_attacker_accepted,
+    probability_user_has_specific_bitmasks,
+    total_change_when_adding_bitmask,
+)
 
 
 class TestJointProbabilities:
@@ -40,7 +45,49 @@ class TestJointProbabilities:
         # Can either be leaked and stolen, or the other way around
         expected = 0.25 * 0.25 * 2
         assert actual == expected
-        
+
+
+class TestConditionalWalletSatisfactionProbabilities:
+    """Verify conditional acceptance probabilities between two wallets."""
+
+    def test_returns_joint_and_both_conditionals(self, uniform_probs):
+        user_wallet = WalletState(2, [0b11], uniform_probs)
+        attacker_wallet = WalletState(2, [0b01], uniform_probs)
+
+        actual = conditional_wallet_satisfaction_probabilities(user_wallet, attacker_wallet)
+
+        assert actual["joint_probability"] == pytest.approx(0.125)
+        assert actual["p_user_satisfies"] == pytest.approx(0.25)
+        assert actual["p_attacker_satisfies"] == pytest.approx(0.5)
+        assert actual["user_given_attacker"] == pytest.approx(0.25)
+        assert actual["attacker_given_user"] == pytest.approx(0.5)
+
+    def test_returns_none_when_conditioning_event_is_impossible(self, uniform_probs):
+        user_wallet = WalletState(2, [0b01], uniform_probs)
+        attacker_wallet = WalletState(2, [], uniform_probs)
+
+        actual = conditional_wallet_satisfaction_probabilities(user_wallet, attacker_wallet)
+
+        assert actual["joint_probability"] == pytest.approx(0.0)
+        assert actual["p_user_satisfies"] == pytest.approx(0.5)
+        assert actual["p_attacker_satisfies"] == pytest.approx(0.0)
+        assert actual["user_given_attacker"] is None
+        assert actual["attacker_given_user"] == pytest.approx(0.0)
+
+    def test_raises_for_mismatched_key_count(self, uniform_probs):
+        user_wallet = WalletState(2, [0b01], uniform_probs)
+        attacker_wallet = WalletState(3, [0b001], uniform_probs)
+
+        with pytest.raises(ValueError, match="same key_count"):
+            conditional_wallet_satisfaction_probabilities(user_wallet, attacker_wallet)
+
+    def test_raises_for_mismatched_probabilities(self, uniform_probs, safe_heavy_probs):
+        user_wallet = WalletState(2, [0b01], uniform_probs)
+        attacker_wallet = WalletState(2, [0b01], safe_heavy_probs)
+
+        with pytest.raises(ValueError, match="identical probabilities"):
+            conditional_wallet_satisfaction_probabilities(user_wallet, attacker_wallet)
+
 
 
 class TestTotalChangeWhenAddingBitmask:
