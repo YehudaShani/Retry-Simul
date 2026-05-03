@@ -1,7 +1,7 @@
 """Unit tests for wallet_enumerations module."""
 import pytest
-from consts import SAFE, LOST, LEAKED, STOLEN
-from wallet_enumerations import (
+from retry_simul.consts import SAFE, LOST, LEAKED, STOLEN
+from retry_simul.wallet_enumerations import (
     isCovered,
     enumerateStates,
     ownerAdvKeysFromStates,

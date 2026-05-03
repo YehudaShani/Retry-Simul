@@ -1,18 +1,17 @@
 """Unit tests for computations module."""
-import sys
-from pathlib import Path
-
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent))
-
 import pytest
-from consts import SAFE, LOST, LEAKED, STOLEN
-from computations import (
+from retry_simul.consts import SAFE, LOST, LEAKED, STOLEN
+from retry_simul.computations import (
     computeSuccessProbability,
     computeSuccessProbabilityWithForbiddenTerm,
     findOptimalWallet,
     generateKeyFaultProbabilityScenarios,
 )
-from wallet_enumerations import enumerateStates, ownerAdvKeysFromStates, enumerateStaticWallets
+from retry_simul.wallet_enumerations import (
+    enumerateStates,
+    ownerAdvKeysFromStates,
+    enumerateStaticWallets,
+)
 
 
 class TestComputeSuccessProbability:

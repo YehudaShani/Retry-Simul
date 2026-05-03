@@ -1,11 +1,6 @@
 """Unit tests for wallet_state module."""
-import sys
-from pathlib import Path
-
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent))
-
 import pytest
-from wallet_state import WalletState
+from retry_simul.wallet_state import WalletState
 
 
 class TestWalletStateConstruction:

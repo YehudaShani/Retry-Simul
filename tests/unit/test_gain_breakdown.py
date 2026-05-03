@@ -1,12 +1,7 @@
 """Unit tests for gain_breakdown module."""
-import sys
-from pathlib import Path
-
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent))
-
 import pytest
-from wallet_state import WalletState
-from gain_breakdown import (
+from retry_simul.wallet_state import WalletState
+from retry_simul.gain_breakdown import (
     conditional_wallet_satisfaction_probabilities,
     probability_user_has_bitmasks_and_attacker_accepted,
     probability_user_has_specific_bitmasks,

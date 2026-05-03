@@ -1,12 +1,27 @@
 """Unit tests for wallet_cache module."""
-import sys
-from pathlib import Path
-
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent))
-
 import pytest
-from wallet_cache import get_cached_static_wallets
-from wallet_enumerations import enumerateStaticWallets
+from retry_simul.wallet_cache import (
+    get_cached_static_wallets,
+    has_cached_wallets,
+    supports_wallet_cache_key_count,
+)
+from retry_simul.wallet_enumerations import enumerateStaticWallets
+
+
+def test_supports_wallet_cache_key_count_range():
+    assert supports_wallet_cache_key_count(1) is True
+    assert supports_wallet_cache_key_count(8) is True
+    assert supports_wallet_cache_key_count(0) is False
+    assert supports_wallet_cache_key_count(9) is False
+
+
+def test_has_cached_wallets_requires_json_file(tmp_path, monkeypatch):
+    """has_cached_wallets is False without on-disk JSON; supports_* is still True for 3..4."""
+    from retry_simul import wallet_cache as wc
+
+    monkeypatch.setattr(wc, "_CACHE_DIR", tmp_path)
+    assert supports_wallet_cache_key_count(3) is True
+    assert has_cached_wallets(3) is False
 
 
 class TestGetCachedStaticWallets:

@@ -1,6 +1,6 @@
 """Unit tests for types_of_wallets module."""
 import pytest
-from types_of_wallets import symmetric_wallet, generate_all_bitmasks
+from retry_simul.types_of_wallets import symmetric_wallet, generate_all_bitmasks
 
 
 class TestSymmetricWallet:

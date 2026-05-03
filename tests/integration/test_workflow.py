@@ -1,11 +1,11 @@
 """Integration tests: verify modules work together."""
 import pytest
-from consts import SAFE, LOST, LEAKED, STOLEN
-import computations
-import wallet_enumerations
-import constrained_probabilities
-from types_of_wallets import symmetric_wallet
-import optimal_symmetric_wallets
+from retry_simul.consts import SAFE, LOST, LEAKED, STOLEN
+from retry_simul import computations
+from retry_simul import wallet_enumerations
+from retry_simul import constrained_probabilities
+from retry_simul.types_of_wallets import symmetric_wallet
+from retry_simul import optimal_symmetric_wallets
 
 
 class TestEnumerateToComputePipeline:

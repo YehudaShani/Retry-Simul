@@ -1,14 +1,17 @@
-from scripts.plot_utils import *  # noqa: F403
-
-from scripts.plot_utils import *  # noqa: F403
-
 """Plot helpers for symmetric wallet success curves."""
+
+import sys
 from pathlib import Path
 from typing import Mapping, Sequence
 
+# Running this file directly does not put ``src/`` on sys.path; add it so ``retry_simul`` resolves.
+_REPO_ROOT = Path(__file__).resolve().parents[1]
+_SRC = _REPO_ROOT / "src"
+if str(_SRC) not in sys.path:
+    sys.path.insert(0, str(_SRC))
+
 import matplotlib.pyplot as plt
 
-from scripts import experiments
 from retry_simul.consts import LOST, LEAKED, SAFE, STOLEN
 
 
@@ -18,19 +21,7 @@ def plot_symmetric_success_wallets(
     show: bool = True,
     save_path: str | None = None,
 ):
-    """Plot one or more symmetric-wallet success curves.
-
-    Args:
-        success_wallets: Either a single sequence of success values indexed by
-            threshold 1..n, or a mapping of label -> sequence for plotting
-            multiple curves on the same axes.
-        title: Plot title.
-        show: Whether to call ``plt.show()``.
-        save_path: Optional file path to save the figure.
-
-    Returns:
-        The ``(fig, ax)`` tuple for further customization.
-    """
+    """Plot one or more symmetric-wallet success curves."""
     if isinstance(success_wallets, Mapping):
         curves = [(label, list(values)) for label, values in success_wallets.items()]
     else:
@@ -69,11 +60,7 @@ def plot_symmetric_success_with_expected_keys(
     optimal_threshold: int | None = None,
     optimal_success: float | None = None,
 ):
-    """Plot symmetric-wallet success with expected key-count references.
-
-    Success is shown against threshold, while the expected user and attacker
-    key counts are shown as vertical reference lines on the same axes.
-    """
+    """Plot symmetric-wallet success with expected key-count references."""
     thresholds = list(range(len(success_by_threshold)))
 
     fig, ax = plt.subplots(figsize=(9, 5))
@@ -91,7 +78,12 @@ def plot_symmetric_success_with_expected_keys(
     ax.set_xlim(0, len(thresholds) + 0.5)
 
     if optimal_threshold is not None:
-        marker_kwargs = {"color": "tab:blue", "s": 60, "zorder": 3, "label": "optimal threshold"}
+        marker_kwargs = {
+            "color": "tab:blue",
+            "s": 60,
+            "zorder": 3,
+            "label": "optimal threshold",
+        }
         if optimal_success is None:
             optimal_success = success_by_threshold[optimal_threshold]
         optimal_marker = ax.scatter([optimal_threshold], [optimal_success], **marker_kwargs)
