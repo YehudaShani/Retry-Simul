@@ -1,5 +1,6 @@
 """Plot helpers for symmetric wallet success curves."""
 
+import json
 import sys
 from pathlib import Path
 from typing import Mapping, Sequence
@@ -176,3 +177,14 @@ def plot_key_count_distributions(
 
     return fig, ax
 
+
+if __name__ == "__main__":
+    # plot the distriuitions for saved probabilities
+    probabilities = json.load(open("data/saved_probabilities_list.json"))
+    for probability in probabilities:
+        plot_key_count_distributions(
+            probability["user_key_count_probabilities"],
+            probability["attacker_key_count_probabilities"],
+            probability["success_by_threshold"],
+            probability["optimal_threshold"],
+        )

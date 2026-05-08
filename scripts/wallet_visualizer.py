@@ -178,7 +178,9 @@ def _build_visualizer_content(
         optimal_bitmasks = None
         if key_count >= 6:
             optimal_text = "Optimal: skipped for key_count >= 6"
-        elif wallet_cache.supports_wallet_cache_key_count(key_count):
+        elif wallet_cache.supports_wallet_cache_key_count(key_count) and wallet_cache.has_cached_wallets(
+            key_count
+        ):
             optimal_wallet_states = ws.return_optimal_wallet_for_probability()
             optimal_success_prob = (
                 optimal_wallet_states[0].compute_success_probability() if optimal_wallet_states else 0.0
@@ -204,7 +206,11 @@ def _build_visualizer_content(
                     + f" (success: {optimal_success_prob:.6f})"
                 )
         else:
-            optimal_text = f"Optimal: N/A (key_count={key_count} outside static-wallet range 1..8)"
+            optimal_text = (
+                "Optimal: N/A (missing cached wallets; avoid enumerating in visualizer)"
+                if wallet_cache.supports_wallet_cache_key_count(key_count)
+                else f"Optimal: N/A (key_count={key_count} outside static-wallet range 1..8)"
+            )
         return symmetric_text, optimal_text, optimal_bitmasks
 
     symmetric_optimal_str, optimal_str, _initial_optimal_bitmasks = compute_optimal_texts()
@@ -734,7 +740,11 @@ def run_visualizer(
 
 
 def _initial_wallet_for_case(key_count: int, probabilities: dict) -> WalletState:
-    if key_count < 6 and wallet_cache.supports_wallet_cache_key_count(key_count):
+    if (
+        key_count < 6
+        and wallet_cache.supports_wallet_cache_key_count(key_count)
+        and wallet_cache.has_cached_wallets(key_count)
+    ):
         empty_wallet = WalletState(key_count, [], probabilities)
         optimal_wallets = empty_wallet.return_optimal_wallet_for_probability()
         if optimal_wallets:
@@ -840,10 +850,10 @@ if __name__ == "__main__":
     #Check these probabilities with previo us symmetric, then with normal symmetric
     #run_visualizer(
     #    key_count=5,
-    #    probabilities={1: 0.36, 2: 0.22, 3: 0.12, 4: 0.3},
+    #    probabilities={1: 0.5, 2: 0, 3: 0.05, 4: 9/20},
     #    orientation="columns",
     #)
 
-    run_visualizer_from_json("data/probabilities_list_exchange_leak_with_loss.json")
+    run_visualizer_from_json("data/saved_probabilities_list.json")
     #generate_random_cases(num_of_keys=5, num_of_cases=50)
 
