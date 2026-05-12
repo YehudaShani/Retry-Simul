@@ -8,12 +8,12 @@ from pathlib import Path
 from typing import Iterable
 
 if __package__ in (None, ""):
-    # Allow running this file directly (e.g. `python src/retry_simul/wallet_cache.py`).
-    # In that case, ensure `src/` is on sys.path so `retry_simul.*` absolute imports resolve.
+    # Allow running this file directly (e.g. `python src/helpers/wallet_cache.py`).
+    # In that case, ensure `src/` is on sys.path so `helpers.*` absolute imports resolve.
     _SRC = Path(__file__).resolve().parents[1]
     if str(_SRC) not in sys.path:
         sys.path.insert(0, str(_SRC))
-    from retry_simul.wallet_enumerations import enumerateStaticWallets
+    from helpers.wallet_enumerations import enumerateStaticWallets
 else:
     from .wallet_enumerations import enumerateStaticWallets
 

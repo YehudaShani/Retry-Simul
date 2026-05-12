@@ -1,16 +1,8 @@
-import sys
-from pathlib import Path
-
-# pytest.ini sets pythonpath=src, so `scripts/` isn't importable unless we add repo root.
-_REPO_ROOT = Path(__file__).resolve().parents[2]
-if str(_REPO_ROOT) not in sys.path:
-    sys.path.insert(0, str(_REPO_ROOT))
-
-from retry_simul import computations
-from retry_simul.consts import SAFE
-from retry_simul import wallet_enumerations
-from retry_simul.wallet_cache import get_cached_static_wallets
-from scripts.ittays_experiments import (
+from helpers import computations
+from helpers.consts import SAFE
+from helpers import wallet_enumerations
+from helpers.wallet_cache import get_cached_static_wallets
+from scripts.experiments.ittays_experiments import (
     find_lowest_psafe_where_symmetric_is_globally_optimal,
     _embed_wallet_skip_key,
     _build_extended_symmetric_candidates,

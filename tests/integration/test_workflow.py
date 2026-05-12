@@ -1,11 +1,11 @@
 """Integration tests: verify modules work together."""
 import pytest
-from retry_simul.consts import SAFE, LOST, LEAKED, STOLEN
-from retry_simul import computations
-from retry_simul import wallet_enumerations
-from retry_simul import constrained_probabilities
-from retry_simul.types_of_wallets import symmetric_wallet
-from retry_simul import optimal_symmetric_wallets
+from helpers.consts import SAFE, LOST, LEAKED, STOLEN
+from helpers import computations
+from helpers import wallet_enumerations
+from helpers import constrained_probabilities
+from helpers.types_of_wallets import symmetric_wallet
+from helpers import optimal_symmetric_wallets
 
 
 class TestEnumerateToComputePipeline:
@@ -53,6 +53,6 @@ class TestConstrainedProbabilitiesIntegration:
         )
         owner, adv = wallet_enumerations.ownerAdvKeysFromStates(states)
         total = constrained_probabilities.constrain_amount_of_keys(
-            owner, adv, state_probs, [1, 2, 3], [0, 1, 2, 3]
+            owner, adv, state_probs, [0, 1, 2, 3], [0, 1, 2, 3]
         )
         assert total == pytest.approx(1.0)

@@ -1,11 +1,11 @@
 import pytest
-from retry_simul.consts import SAFE, LOST, LEAKED, STOLEN
-from retry_simul import computations
-from retry_simul import wallet_enumerations
-from retry_simul import constrained_probabilities
+from helpers.consts import SAFE, LOST, LEAKED, STOLEN
+from helpers import computations
+from helpers import wallet_enumerations
+from helpers import constrained_probabilities
 from tests.conftest import key_count
-from retry_simul.types_of_wallets import symmetric_wallet
-from retry_simul import optimal_symmetric_wallets
+from helpers.types_of_wallets import symmetric_wallet
+from helpers import optimal_symmetric_wallets
 
 
 

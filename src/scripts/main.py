@@ -1,12 +1,12 @@
 import random
 
-from retry_simul import computations
-from retry_simul.consts import SAFE, LOST, LEAKED, STOLEN
+from helpers import computations
+from helpers.consts import SAFE, LOST, LEAKED, STOLEN
 
 from scripts import experiments
 from scripts.plot_utils import plot_key_count_distributions
 from scripts.wallet_visualizer import run_visualizer
-from retry_simul.wallet_state import WalletState
+from helpers.wallet_state import WalletState
 
 
 def main():

@@ -2,8 +2,8 @@ from tracemalloc import stop
 import random
 
 from scripts import paper_calculations
-from retry_simul import optimal_symmetric_wallets
-from retry_simul import computations
+from helpers import optimal_symmetric_wallets
+from helpers import computations
 
 
 def calculate_attacker_conditional_ratios(key_count, probabilities, optimal_threshold):

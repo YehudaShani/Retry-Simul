@@ -1,13 +1,13 @@
 """Unit tests for computations module."""
 import pytest
-from retry_simul.consts import SAFE, LOST, LEAKED, STOLEN
-from retry_simul.computations import (
+from helpers.consts import SAFE, LOST, LEAKED, STOLEN
+from helpers.computations import (
     computeSuccessProbability,
     computeSuccessProbabilityWithForbiddenTerm,
     findOptimalWallet,
     generateKeyFaultProbabilityScenarios,
 )
-from retry_simul.wallet_enumerations import (
+from helpers.wallet_enumerations import (
     enumerateStates,
     ownerAdvKeysFromStates,
     enumerateStaticWallets,

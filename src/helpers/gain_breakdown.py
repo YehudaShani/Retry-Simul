@@ -128,32 +128,13 @@ def total_change_when_adding_bitmask(
     bitmasks: List[int],
 ) -> float:
     """Total change in success probability when adding the given bitmasks to the wallet."""
-
-    # remove bitmasks that are covered by wallet
-    bitmasks_to_remove = set()
-    for bitmask in bitmasks:
-        if wallet_state.bitmask_is_in_wallet(bitmask):
-            bitmasks_to_remove.add(bitmask)
-    for bitmask in bitmasks_to_remove:
-        bitmasks.remove(bitmask)
-
-    p_user_has_specific_bitmasks = probability_user_has_specific_bitmasks(
-        wallet_state.probabilities, wallet_state.key_count, bitmasks
+    prob_before = wallet_state.compute_success_probability()
+    clone = WalletState(
+        wallet_state.key_count,
+        list(wallet_state.bitmasks),
+        wallet_state.probabilities,
     )
-    p_attacker_has_bitmasks_and_user_accepted = probability_attacker_has_bitmasks_and_user_accepted(
-        wallet_state, bitmasks
-    )
-    p_user_has_bitmasks_and_attacker_accepted = probability_user_has_bitmasks_and_attacker_accepted(
-        wallet_state, bitmasks
-    )
-    p_both_have_same_bitmasks = probability_both_have_same_bitmasks(
-        wallet_state.probabilities, wallet_state.key_count, bitmasks
-    )
-
-    return (
-        p_user_has_specific_bitmasks
-        - p_attacker_has_bitmasks_and_user_accepted
-        - p_user_has_bitmasks_and_attacker_accepted
-        - p_both_have_same_bitmasks
-    )
+    for b in bitmasks:
+        clone.add_bitmask(b)
+    return clone.compute_success_probability() - prob_before
 

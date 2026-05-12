@@ -12,11 +12,11 @@ if str(_REPO_ROOT) not in sys.path:
 if str(_SRC) not in sys.path:
     sys.path.insert(0, str(_SRC))
 
-from retry_simul import computations
-from retry_simul.consts import SAFE
-from retry_simul import wallet_enumerations
-from retry_simul.types_of_wallets import symmetric_wallet
-from retry_simul.wallet_cache import get_cached_static_wallets
+from helpers import computations
+from helpers.consts import SAFE
+from helpers import wallet_enumerations
+from helpers.types_of_wallets import symmetric_wallet
+from helpers.wallet_cache import get_cached_static_wallets
 
 
 def _normalize_wallet(wallet: Iterable[int] | None) -> Tuple[int, ...]:
@@ -247,7 +247,7 @@ def find_lowest_psafe_where_symmetric_is_globally_optimal(
 
 if __name__ == "__main__":
     # Launch the wallet visualizer on the first (highest-psafe) failure case.
-    from retry_simul.wallet_state import WalletState
+    from helpers.wallet_state import WalletState
     from scripts.wallet_visualizer import run_visualizer
 
     key_count = 5

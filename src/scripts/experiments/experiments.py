@@ -1,13 +1,13 @@
 import json
-from retry_simul import computations
-from retry_simul.types_of_wallets import symmetric_wallet, generate_single_bitmask
-from retry_simul import wallet_state
-from retry_simul import optimal_symmetric_wallets
-from retry_simul import constrained_probabilities
-from retry_simul import wallet_enumerations
-from retry_simul.wallet_cache import get_cached_static_wallets
+from helpers import computations
+from helpers.types_of_wallets import symmetric_wallet, generate_single_bitmask
+from helpers import wallet_state
+from helpers import optimal_symmetric_wallets
+from helpers import constrained_probabilities
+from helpers import wallet_enumerations
+from helpers.wallet_cache import get_cached_static_wallets
 import random
-from retry_simul.consts import SAFE, LOST, LEAKED, STOLEN
+from helpers.consts import SAFE, LOST, LEAKED, STOLEN
 
 
 def build_symmetric_success_and_expected_keys(keyCount: int, probability: dict) -> dict:

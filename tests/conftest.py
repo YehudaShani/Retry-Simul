@@ -1,6 +1,6 @@
 """Shared fixtures for unit and integration tests."""
 import pytest
-from retry_simul.consts import SAFE, LOST, LEAKED, STOLEN
+from helpers.consts import SAFE, LOST, LEAKED, STOLEN
 
 
 @pytest.fixture

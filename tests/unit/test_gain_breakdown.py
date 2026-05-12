@@ -1,7 +1,7 @@
 """Unit tests for gain_breakdown module."""
 import pytest
-from retry_simul.wallet_state import WalletState
-from retry_simul.gain_breakdown import (
+from helpers.wallet_state import WalletState
+from helpers.gain_breakdown import (
     conditional_wallet_satisfaction_probabilities,
     probability_user_has_bitmasks_and_attacker_accepted,
     probability_user_has_specific_bitmasks,

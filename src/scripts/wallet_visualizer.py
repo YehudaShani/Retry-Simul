@@ -9,19 +9,18 @@ from tkinter.simpledialog import askstring
 from typing import Iterable, Literal
 import random
 
-# Direct script run: add ``src/`` so ``retry_simul`` is importable (same as other ``scripts/*.py``).
-_REPO_ROOT = Path(__file__).resolve().parents[1]
-_SRC = _REPO_ROOT / "src"
+# Direct script run: add ``src/`` so ``helpers`` is importable (same as other ``scripts/*.py``).
+_SRC = Path(__file__).resolve().parents[1]
 if str(_SRC) not in sys.path:
     sys.path.insert(0, str(_SRC))
 
-from retry_simul import computations
-from retry_simul.consts import KeyStateString, KeyStates, LEAKED, LOST, SAFE, STOLEN
-from retry_simul import optimal_symmetric_wallets
-from retry_simul import wallet_cache
-from retry_simul.wallet_enumerations import oneBitIndices, walletStr
-from retry_simul.wallet_state import WalletState
-from retry_simul.symbols import (
+from helpers import computations
+from helpers.consts import KeyStateString, KeyStates, LEAKED, LOST, SAFE, STOLEN
+from helpers import optimal_symmetric_wallets
+from helpers import wallet_cache
+from helpers.wallet_enumerations import oneBitIndices, walletStr
+from helpers.wallet_state import WalletState
+from helpers.symbols import (
     UI_MONOMIAL_STATE_LABELS,
     format_signed_polynomial_sum,
     format_success_probability_polynomial,
@@ -854,6 +853,6 @@ if __name__ == "__main__":
     #    orientation="columns",
     #)
 
-    run_visualizer_from_json("data/saved_probabilities_list.json")
+    run_visualizer_from_json("data/saved_lists/saved_probabilities_list.json")
     #generate_random_cases(num_of_keys=5, num_of_cases=50)
 

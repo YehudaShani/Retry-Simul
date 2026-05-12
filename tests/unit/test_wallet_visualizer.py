@@ -1,6 +1,6 @@
 import pytest
 
-from retry_simul.consts import LEAKED, LOST, SAFE, STOLEN
+from helpers.consts import LEAKED, LOST, SAFE, STOLEN
 from scripts.wallet_visualizer import redistribute_probability_change
 
 

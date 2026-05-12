@@ -1,4 +1,4 @@
-"# Retry-Simul"
+# Retry-Simul
 
 ## Setup
 
@@ -16,7 +16,7 @@ python -m pytest
 
 ## Repo layout
 
-- `src/retry_simul/`: importable library code (what tests target)
+- `src/helpers/`: importable library code (what tests target)
 - `tests/`: pytest tests
 - `scripts/`: runnable utilities / experiments
 

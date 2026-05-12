@@ -1,6 +1,6 @@
 """Unit tests for wallet_state module."""
 import pytest
-from retry_simul.wallet_state import WalletState
+from helpers.wallet_state import WalletState
 
 
 class TestWalletStateConstruction:

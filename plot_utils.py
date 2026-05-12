@@ -9,7 +9,7 @@ from typing import Mapping, Sequence
 import matplotlib.pyplot as plt
 
 from scripts import experiments
-from retry_simul.consts import LOST, LEAKED, SAFE, STOLEN
+from helpers.consts import LOST, LEAKED, SAFE, STOLEN
 
 
 def plot_symmetric_success_wallets(

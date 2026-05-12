@@ -1,6 +1,6 @@
 """Unit tests for symbolic polynomial formatting."""
 
-from retry_simul.symbols import (
+from helpers.symbols import (
     UI_MONOMIAL_STATE_LABELS,
     format_success_probability_polynomial,
     format_signed_polynomial_sum,

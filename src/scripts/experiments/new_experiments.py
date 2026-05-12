@@ -10,18 +10,18 @@ _SRC = _REPO_ROOT / "src"
 if str(_SRC) not in sys.path:
     sys.path.insert(0, str(_SRC))
 
-from retry_simul import computations
-from retry_simul.types_of_wallets import (
+from helpers import computations
+from helpers.types_of_wallets import (
     symmetric_wallet,
     symmetric_wallet_threshold,
     generate_single_bitmask,
 )
-from retry_simul import wallet_state
-from retry_simul import optimal_symmetric_wallets
-from retry_simul import constrained_probabilities
-from retry_simul import wallet_enumerations
-from retry_simul.consts import SAFE, LOST, LEAKED, STOLEN, KeyStateString
-from retry_simul.wallet_cache import get_cached_static_wallets
+from helpers import wallet_state
+from helpers import optimal_symmetric_wallets
+from helpers import constrained_probabilities
+from helpers import wallet_enumerations
+from helpers.consts import SAFE, LOST, LEAKED, STOLEN, KeyStateString
+from helpers.wallet_cache import get_cached_static_wallets
 
 
 def check_adding_comb_two_keys_under_optimal_symmetric_wallet(key_count = 5, quantity_of_cases = 50):

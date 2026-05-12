@@ -1,7 +1,7 @@
 from math import comb
 
-from retry_simul.consts import LEAKED, SAFE, STOLEN, LOST
-from retry_simul import gain_breakdown
+from helpers.consts import LEAKED, SAFE, STOLEN, LOST
+from helpers import gain_breakdown
 
 
 def binomial_cdf(n, k, p):

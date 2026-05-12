@@ -5,7 +5,7 @@ import sys
 from pathlib import Path
 from typing import Mapping, Sequence
 
-# Running this file directly does not put ``src/`` on sys.path; add it so ``retry_simul`` resolves.
+# Running this file directly does not put ``src/`` on sys.path; add it so ``helpers`` resolves.
 _REPO_ROOT = Path(__file__).resolve().parents[1]
 _SRC = _REPO_ROOT / "src"
 if str(_SRC) not in sys.path:
@@ -13,7 +13,7 @@ if str(_SRC) not in sys.path:
 
 import matplotlib.pyplot as plt
 
-from retry_simul.consts import LOST, LEAKED, SAFE, STOLEN
+from helpers.consts import LOST, LEAKED, SAFE, STOLEN
 
 
 def plot_symmetric_success_wallets(

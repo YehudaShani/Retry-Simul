@@ -15,7 +15,7 @@ _SRC = _REPO_ROOT / "src"
 if str(_SRC) not in sys.path:
     sys.path.insert(0, str(_SRC))
 
-from retry_simul.wallet_enumerations import oneBitIndices
+from helpers.wallet_enumerations import oneBitIndices
 
 _DEFAULT_OUTPUT_DIR_NAME = "dominance_graphs"
 
