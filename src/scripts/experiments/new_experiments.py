@@ -4,11 +4,13 @@ from pathlib import Path
 import random
 from datetime import datetime
 
-# Allow running `python scripts/new_experiments.py` from repo root.
-_REPO_ROOT = Path(__file__).resolve().parents[1]
-_SRC = _REPO_ROOT / "src"
-if str(_SRC) not in sys.path:
-    sys.path.insert(0, str(_SRC))
+for _src in Path(__file__).resolve().parents:
+    if (_src / "helpers").is_dir() and (_src / "scripts").is_dir():
+        if str(_src) not in sys.path:
+            sys.path.insert(0, str(_src))
+        break
+
+from helpers.paths import PROBABILITIES_EXCHANGE_LEAK_WITH_LOSS_FILE, data_path, repo_relative
 
 from helpers import computations
 from helpers.types_of_wallets import (
@@ -72,7 +74,7 @@ def make_list_of_probabilities():
                 "message": "LEAKED and LOST probabilities swapped",
             })
 
-    output_path = _REPO_ROOT / "data" / "probabilities_list_exchange_leak_with_loss.json"
+    output_path = PROBABILITIES_EXCHANGE_LEAK_WITH_LOSS_FILE
     with output_path.open("w", encoding="utf-8") as f:
         json.dump(probability_cases, f, indent=2)
 
@@ -100,12 +102,13 @@ def save_probabilities_and_every_wallet_performance(num_of_cases = 5000, key_cou
                 "wallet": wallet,
                 "success_probability": success_probability
             })
-    with open(f"data/probabilities_and_every_wallet_performance_{key_count}_keys_{num_of_cases}_cases.json", "w") as f:
+    with data_path(
+        f"probabilities_and_every_wallet_performance_{key_count}_keys_{num_of_cases}_cases.json"
+    ).open("w", encoding="utf-8") as f:
         json.dump(results, f, indent=2)
 
 def _repo_path(path):
-    path = Path(path)
-    return path if path.is_absolute() else _REPO_ROOT / path
+    return repo_relative(path)
 
 
 def _key_count_from_filename(input_path):

@@ -4,13 +4,11 @@ from collections import defaultdict
 from pathlib import Path
 from typing import Any, Dict, Iterable, Tuple
 
-# Allow running `python scripts/ittays_experiments.py` from repo root.
-_REPO_ROOT = Path(__file__).resolve().parents[1]
-_SRC = _REPO_ROOT / "src"
-if str(_REPO_ROOT) not in sys.path:
-    sys.path.insert(0, str(_REPO_ROOT))
-if str(_SRC) not in sys.path:
-    sys.path.insert(0, str(_SRC))
+for _src in Path(__file__).resolve().parents:
+    if (_src / "helpers").is_dir() and (_src / "scripts").is_dir():
+        if str(_src) not in sys.path:
+            sys.path.insert(0, str(_src))
+        break
 
 from helpers import computations
 from helpers.consts import SAFE

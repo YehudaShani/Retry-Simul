@@ -9,11 +9,13 @@ from collections import defaultdict, deque
 from pathlib import Path
 from typing import Any, Iterable
 
+for _src in Path(__file__).resolve().parents:
+    if (_src / "helpers").is_dir() and (_src / "scripts").is_dir():
+        if str(_src) not in sys.path:
+            sys.path.insert(0, str(_src))
+        break
 
-_REPO_ROOT = Path(__file__).resolve().parents[1]
-_SRC = _REPO_ROOT / "src"
-if str(_SRC) not in sys.path:
-    sys.path.insert(0, str(_SRC))
+from helpers.paths import REPO_ROOT, repo_relative
 
 from helpers.wallet_enumerations import oneBitIndices
 
@@ -24,8 +26,7 @@ Edge = tuple[Wallet, Wallet]
 
 
 def _repo_path(path: str | Path) -> Path:
-    path = Path(path)
-    return path if path.is_absolute() else _REPO_ROOT / path
+    return repo_relative(path)
 
 
 def wallet_key(wallet: Iterable[int]) -> Wallet:
@@ -356,7 +357,7 @@ def process_ranking_file(path: str | Path, output_dir: str | Path | None = None)
         output_dir = _repo_path(output_dir)
 
     cases = load_ranking_cases(input_path)
-    graph = build_dominance_graph(cases, source_file=str(input_path.relative_to(_REPO_ROOT)))
+    graph = build_dominance_graph(cases, source_file=str(input_path.relative_to(REPO_ROOT)))
 
     json_path = Path(output_dir) / f"{input_path.stem}_dominance_graph.json"
     png_path = Path(output_dir) / f"{input_path.stem}_dominance_graph.png"

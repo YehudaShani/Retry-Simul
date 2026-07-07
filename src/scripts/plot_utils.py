@@ -5,11 +5,13 @@ import sys
 from pathlib import Path
 from typing import Mapping, Sequence
 
-# Running this file directly does not put ``src/`` on sys.path; add it so ``helpers`` resolves.
-_REPO_ROOT = Path(__file__).resolve().parents[1]
-_SRC = _REPO_ROOT / "src"
-if str(_SRC) not in sys.path:
-    sys.path.insert(0, str(_SRC))
+for _src in Path(__file__).resolve().parents:
+    if (_src / "helpers").is_dir() and (_src / "scripts").is_dir():
+        if str(_src) not in sys.path:
+            sys.path.insert(0, str(_src))
+        break
+
+from helpers.paths import SAVED_PROBABILITIES_FILE
 
 import matplotlib.pyplot as plt
 
@@ -179,8 +181,9 @@ def plot_key_count_distributions(
 
 
 if __name__ == "__main__":
-    # plot the distriuitions for saved probabilities
-    probabilities = json.load(open("data/saved_probabilities_list.json"))
+    # plot the distributions for saved probabilities
+    with SAVED_PROBABILITIES_FILE.open(encoding="utf-8") as f:
+        probabilities = json.load(f)
     for probability in probabilities:
         plot_key_count_distributions(
             probability["user_key_count_probabilities"],

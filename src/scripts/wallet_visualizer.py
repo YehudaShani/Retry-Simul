@@ -9,10 +9,13 @@ from tkinter.simpledialog import askstring
 from typing import Iterable, Literal
 import random
 
-# Direct script run: add ``src/`` so ``helpers`` is importable (same as other ``scripts/*.py``).
-_SRC = Path(__file__).resolve().parents[1]
-if str(_SRC) not in sys.path:
-    sys.path.insert(0, str(_SRC))
+for _src in Path(__file__).resolve().parents:
+    if (_src / "helpers").is_dir() and (_src / "scripts").is_dir():
+        if str(_src) not in sys.path:
+            sys.path.insert(0, str(_src))
+        break
+
+from helpers.paths import SAVED_PROBABILITIES_FILE, data_path, repo_relative
 
 from helpers import computations
 from helpers.consts import KeyStateString, KeyStates, LEAKED, LOST, SAFE, STOLEN
@@ -27,8 +30,6 @@ from helpers.symbols import (
     success_probability_polynomial_coefficients,
     success_probability_polynomial_difference_coefficients,
 )
-
-SAVED_PROBABILITIES_FILE = Path(__file__).resolve().parent / "data" / "saved_probabilities_list.json"
 
 NAME_TO_CONST = {"SAFE": SAFE, "LOST": LOST, "LEAKED": LEAKED, "STOLEN": STOLEN}
 PROBABILITY_EPSILON = 1e-12
@@ -472,9 +473,15 @@ def _build_visualizer_content(
         try:
             data = []
             if SAVED_PROBABILITIES_FILE.exists():
-                data = json.loads(SAVED_PROBABILITIES_FILE.read_text())
+                data = json.loads(SAVED_PROBABILITIES_FILE.read_text(encoding="utf-8"))
             data.append(entry)
-            SAVED_PROBABILITIES_FILE.write_text(json.dumps(data, indent=2))
+            SAVED_PROBABILITIES_FILE.parent.mkdir(parents=True, exist_ok=True)
+            SAVED_PROBABILITIES_FILE.write_text(json.dumps(data, indent=2), encoding="utf-8")
+            messagebox.showinfo(
+                "Saved",
+                f"Entry appended to\n{SAVED_PROBABILITIES_FILE}",
+                parent=toplevel,
+            )
         except (json.JSONDecodeError, OSError) as e:
             messagebox.showerror("Save failed", str(e), parent=toplevel)
 
@@ -761,7 +768,8 @@ def run_visualizer_from_json(json_path: str):
     with Prev/Next buttons to step through the list one by one.
     Each entry can have: probabilities, keyCount/key_count, optimal_threshold, optimal_success, message, etc.
     """
-    with open(json_path, encoding="utf-8") as f:
+    resolved_path = repo_relative(json_path)
+    with open(resolved_path, encoding="utf-8") as f:
         data = json.load(f)
     if not isinstance(data, list):
         data = [data]
@@ -771,7 +779,7 @@ def run_visualizer_from_json(json_path: str):
     normalized = [_normalize_json_item(item) for item in data]
 
     root = tk.Tk()
-    root.title(f"Wallet Visualizer — {json_path}")
+    root.title(f"Wallet Visualizer — {resolved_path}")
     root.geometry("800x680")
 
     nav_frame = ttk.Frame(root)
@@ -827,7 +835,7 @@ def generate_random_cases(num_of_keys = 5, num_of_cases: int = 50):
     probabilities = computations.generateKeyFaultProbabilityScenarios(step=0.01)
     probabilities = random.sample(probabilities, num_of_cases)
     # save list in json file
-    out_path = f"data/random_cases_{num_of_keys}_keys_{num_of_cases}_cases.json"
+    out_path = data_path(f"random_cases_{num_of_keys}_keys_{num_of_cases}_cases.json")
     items = [
         {
             "key_count": num_of_keys,
@@ -843,16 +851,16 @@ def generate_random_cases(num_of_keys = 5, num_of_cases: int = 50):
     ]
     with open(out_path, "w", encoding="utf-8") as f:
         json.dump(items, f, indent=2)
-    run_visualizer_from_json(out_path)
+    run_visualizer_from_json(str(out_path))
 
 if __name__ == "__main__":
     #Check these probabilities with previo us symmetric, then with normal symmetric
     #run_visualizer(
-    #    key_count=5,
-    #    probabilities={1: 0.5, 2: 0, 3: 0.05, 4: 9/20},
+    #    key_count=8,
+    #    probabilities={1: 0.1826, 2: 0.242, 3: 0.3936, 4: 0.1818},
     #    orientation="columns",
     #)
 
-    run_visualizer_from_json("data/saved_lists/saved_probabilities_list.json")
+    run_visualizer_from_json(str(SAVED_PROBABILITIES_FILE))
     #generate_random_cases(num_of_keys=5, num_of_cases=50)
 
