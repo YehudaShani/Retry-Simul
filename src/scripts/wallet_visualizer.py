@@ -412,6 +412,14 @@ def _build_visualizer_content(
     delta_label = ttk.Label(info_parent, textvariable=delta_var, font=("", 10))
     delta_label.pack(pady=(0, 4))
 
+    disjoint_var = tk.StringVar(
+        value="Right-click a combination to count disjoint wallet combinations"
+    )
+    disjoint_label = ttk.Label(
+        info_parent, textvariable=disjoint_var, font=("", 10), wraplength=subtitle_wraplength
+    )
+    disjoint_label.pack(pady=(0, 6))
+
     poly_outer = ttk.LabelFrame(
         info_parent,
         text="Symbolic success (i.i.d. keys; p_SAFE + p_LOST + p_LEAKED + p_STOLEN = 1 per key)",
@@ -715,16 +723,38 @@ def _build_visualizer_content(
         update_success_polynomial()
 
     buttons = {}
+    reference_bitmask: list[int | None] = [None]
 
     PRESSED_BG = "#b0b0b0"
     UNPRESSED_BG = "#e8e8e8"
+    REFERENCE_BG = "#6fa8dc"
+    DISJOINT_BG = "#93c47d"
 
     def refresh_all_buttons():
+        ref = reference_bitmask[0]
+        disjoint_count = 0
         for m, btn in buttons.items():
             in_wallet = ws.bitmask_is_in_wallet(m)
-            btn.config(
-                relief=tk.SUNKEN if in_wallet else tk.RAISED,
-                bg=PRESSED_BG if in_wallet else UNPRESSED_BG,
+            is_ref = ref is not None and m == ref
+            is_disjoint = ref is not None and in_wallet and (m & ref) == 0
+            if is_disjoint:
+                disjoint_count += 1
+            if is_ref:
+                bg = REFERENCE_BG
+            elif is_disjoint:
+                bg = DISJOINT_BG
+            elif in_wallet:
+                bg = PRESSED_BG
+            else:
+                bg = UNPRESSED_BG
+            btn.config(relief=tk.SUNKEN if in_wallet else tk.RAISED, bg=bg)
+        if ref is None:
+            disjoint_var.set(
+                "Right-click a combination to count disjoint wallet combinations"
+            )
+        else:
+            disjoint_var.set(
+                f"Disjoint from {_bitmask_label(ref)}: {disjoint_count} covered combination(s)"
             )
 
     def make_toggle(bitmask: int, parent_frame):
@@ -737,6 +767,10 @@ def _build_visualizer_content(
 
             with_change(change)
 
+        def on_set_reference(_event=None):
+            reference_bitmask[0] = None if reference_bitmask[0] == bitmask else bitmask
+            refresh_all_buttons()
+
         label = _bitmask_label(bitmask)
         btn = tk.Button(
             parent_frame,
@@ -747,6 +781,7 @@ def _build_visualizer_content(
             cursor="hand2",
             bg=UNPRESSED_BG,
         )
+        btn.bind("<Button-3>", on_set_reference)
         return btn
 
     if orientation == "rows":
@@ -1065,7 +1100,7 @@ def generate_random_cases(num_of_keys = 5, num_of_cases: int = 50):
 if __name__ == "__main__":
     #Check these probabilities with previo us symmetric, then with normal symmetric
     #run_visualizer(
-    #    key_count=5,
+    #    key_count=4,
     #    probabilities={1: 0.52, 2: 0, 3: 0.14, 4: 0.34},
     #    orientation="columns",
     #)
