@@ -1,5 +1,6 @@
 """Tkinter desktop app for visualizing wallet bitmasks and success probability."""
 import json
+import re
 import sys
 from pathlib import Path
 import tkinter as tk
@@ -40,11 +41,12 @@ def _normalize_probs(probs: dict) -> dict:
     return {NAME_TO_CONST.get(k, k): v for k, v in probs.items()}
 
 
-def _normalize_json_item(item: dict) -> tuple[int, dict, str]:
+def _normalize_json_item(item: dict) -> tuple[int, dict, str, list[int] | None]:
     """
     Normalize a single item from a probabilities/params JSON list.
-    Returns (key_count, probabilities, extra_subtitle).
-    Works with probabilities-only, or items that include keyCount, optimal_*, message, etc.
+    Returns (key_count, probabilities, extra_subtitle, wallet).
+    Works with probabilities-only, or items that include keyCount, optimal_*, message,
+    and an optional explicit wallet (``wallet`` or ``bitmasks``).
     """
     probs_raw = item.get("probabilities") if isinstance(item, dict) and "probabilities" in item else item
     if isinstance(probs_raw, dict):
@@ -55,6 +57,11 @@ def _normalize_json_item(item: dict) -> tuple[int, dict, str]:
     else:
         probs = {SAFE: 0.25, LOST: 0.25, LEAKED: 0.25, STOLEN: 0.25}
     key_count = item.get("keyCount") or item.get("key_count") or 4
+    wallet = None
+    if isinstance(item, dict):
+        wallet_raw = item.get("wallet", item.get("bitmasks"))
+        if isinstance(wallet_raw, list):
+            wallet = [int(m) for m in wallet_raw]
     extra_parts = []
     if "optimal_threshold" in item:
         extra_parts.append(f"optimal_threshold: {item['optimal_threshold']}")
@@ -63,7 +70,7 @@ def _normalize_json_item(item: dict) -> tuple[int, dict, str]:
     if "message" in item:
         extra_parts.append(str(item["message"]))
     extra_subtitle = "  |  ".join(extra_parts) if extra_parts else ""
-    return key_count, probs, extra_subtitle
+    return key_count, probs, extra_subtitle, wallet
 
 
 def _bitmask_label(bitmask: int) -> str:
@@ -165,12 +172,65 @@ def _build_visualizer_content(
     toplevel = parent.winfo_toplevel()
     groups = _group_bitmasks_by_key_count(key_count)
 
+    # With many keys the button grid needs the full window height, so move the
+    # textual info/controls into a scrollable side panel on the left and let the
+    # bitmask canvas fill the rest of the window on the right.
+    use_side_panel = key_count >= 6
+    if use_side_panel:
+        split_frame = ttk.Frame(parent)
+        split_frame.pack(fill=tk.BOTH, expand=True)
+
+        side_outer = ttk.Frame(split_frame)
+        side_outer.pack(side=tk.LEFT, fill=tk.Y, padx=(0, 6))
+        side_canvas = tk.Canvas(side_outer, width=340, highlightthickness=0)
+        side_scrollbar = ttk.Scrollbar(side_outer, orient=tk.VERTICAL, command=side_canvas.yview)
+        side_canvas.configure(yscrollcommand=side_scrollbar.set)
+        side_scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
+        side_canvas.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+        info_parent = ttk.Frame(side_canvas)
+        side_window = side_canvas.create_window((0, 0), window=info_parent, anchor=tk.NW)
+
+        def _on_side_configure(_event=None):
+            side_canvas.configure(scrollregion=side_canvas.bbox("all"))
+
+        def _on_side_canvas_configure(event):
+            side_canvas.itemconfigure(side_window, width=event.width)
+
+        info_parent.bind("<Configure>", _on_side_configure)
+        side_canvas.bind("<Configure>", _on_side_canvas_configure)
+
+        def _on_side_mousewheel(event):
+            if event.num == 5 or (hasattr(event, "delta") and event.delta < 0):
+                side_canvas.yview_scroll(1, "units")
+            elif event.num == 4 or (hasattr(event, "delta") and event.delta > 0):
+                side_canvas.yview_scroll(-1, "units")
+
+        side_canvas.bind("<MouseWheel>", _on_side_mousewheel)
+        side_canvas.bind("<Button-4>", _on_side_mousewheel)
+        side_canvas.bind("<Button-5>", _on_side_mousewheel)
+
+        canvas_parent = ttk.Frame(split_frame)
+        canvas_parent.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+    else:
+        info_parent = parent
+        canvas_parent = parent
+
+    subtitle_wraplength = 320 if use_side_panel else 760
+
+    def _pack_bottom_button(btn: tk.Widget) -> None:
+        if use_side_panel:
+            btn.pack(side=tk.TOP, fill=tk.X, padx=4, pady=2)
+        else:
+            btn.pack(side=tk.LEFT, padx=4)
+
     def compute_optimal_texts() -> tuple[str, str, list[int] | None]:
-        opt_wallet, _opt_prob, opt_threshold = optimal_symmetric_wallets.find_optimal_symmetric_wallets(
+        opt_wallet, opt_prob, opt_threshold = optimal_symmetric_wallets.find_optimal_symmetric_wallets(
             key_count, probabilities
         )
         symmetric_text = (
-            f"Symmetric optimal: {opt_threshold}-of-{key_count}" if opt_wallet else "Symmetric optimal: N/A"
+            f"Symmetric optimal: {opt_threshold}-of-{key_count} (success: {opt_prob:.6f})"
+            if opt_wallet
+            else "Symmetric optimal: N/A"
         )
         if extra_subtitle:
             symmetric_text = symmetric_text + "  |  " + extra_subtitle
@@ -216,15 +276,15 @@ def _build_visualizer_content(
     symmetric_optimal_str, optimal_str, _initial_optimal_bitmasks = compute_optimal_texts()
     probabilities_text_var = tk.StringVar(value=f"Probabilities:  {_format_probabilities(probabilities)}")
 
-    probability_controls_visible = tk.BooleanVar(value=True)
-    probability_controls_toggle_text = tk.StringVar(value="Hide probability controls")
+    probability_controls_visible = tk.BooleanVar(value=False)
+    probability_controls_toggle_text = tk.StringVar(value="Show probability controls")
     probability_controls_toggle = ttk.Button(
-        parent,
+        info_parent,
         textvariable=probability_controls_toggle_text,
     )
     probability_controls_toggle.pack(pady=(10, 0))
 
-    probability_controls = ttk.LabelFrame(parent, text="Adjust probabilities", padding=(8, 6, 8, 6))
+    probability_controls = ttk.LabelFrame(info_parent, text="Adjust probabilities", padding=(8, 6, 8, 6))
 
     probability_slider_vars: dict[int, tk.DoubleVar] = {}
     probability_value_vars: dict[int, tk.StringVar] = {}
@@ -290,7 +350,7 @@ def _build_visualizer_content(
             delta_var.set(f"↓ {delta:.6f}")
         else:
             delta_var.set("— no change")
-        schedule_optimal_refresh(apply_optimal_wallet=True)
+        schedule_optimal_refresh(apply_optimal_wallet=auto_apply_optimal_wallet.get())
 
     for row, state in enumerate(KeyStates):
         probability_check_vars[state] = tk.BooleanVar(value=True)
@@ -339,19 +399,21 @@ def _build_visualizer_content(
     probability_controls_toggle.configure(command=toggle_probability_controls)
     apply_probability_controls_visibility()
 
-    probs_label = ttk.Label(parent, textvariable=probabilities_text_var, font=("", 10))
+    probs_label = ttk.Label(
+        info_parent, textvariable=probabilities_text_var, font=("", 10), wraplength=subtitle_wraplength
+    )
     probs_label.pack(pady=(10, 2))
 
     prob_var = tk.StringVar(value="Success probability: 0.000000")
-    prob_label = ttk.Label(parent, textvariable=prob_var, font=("", 14))
+    prob_label = ttk.Label(info_parent, textvariable=prob_var, font=("", 14))
     prob_label.pack(pady=(2, 10))
 
     delta_var = tk.StringVar(value="")
-    delta_label = ttk.Label(parent, textvariable=delta_var, font=("", 10))
+    delta_label = ttk.Label(info_parent, textvariable=delta_var, font=("", 10))
     delta_label.pack(pady=(0, 4))
 
     poly_outer = ttk.LabelFrame(
-        parent,
+        info_parent,
         text="Symbolic success (i.i.d. keys; p_SAFE + p_LOST + p_LEAKED + p_STOLEN = 1 per key)",
         padding=(6, 4, 6, 6),
     )
@@ -398,7 +460,7 @@ def _build_visualizer_content(
 
     poly_outer.bind("<Configure>", _schedule_poly_text_height, add=True)
 
-    poly_delta_outer = ttk.Frame(parent)
+    poly_delta_outer = ttk.Frame(info_parent)
     poly_delta_box = ttk.LabelFrame(
         poly_delta_outer,
         text="Symbolic change (last edit)",
@@ -454,11 +516,35 @@ def _build_visualizer_content(
     symmetric_optimal_var = tk.StringVar(value=symmetric_optimal_str)
     optimal_subtitle_var = tk.StringVar(value=optimal_str)
 
-    subtitle_label = ttk.Label(parent, textvariable=symmetric_optimal_var, font=("", 10), wraplength=760)
+    subtitle_label = ttk.Label(
+        info_parent, textvariable=symmetric_optimal_var, font=("", 10), wraplength=subtitle_wraplength
+    )
     subtitle_label.pack(pady=(0, 4))
 
-    optimal_subtitle_label = ttk.Label(parent, textvariable=optimal_subtitle_var, font=("", 10), wraplength=760)
+    optimal_subtitle_label = ttk.Label(
+        info_parent, textvariable=optimal_subtitle_var, font=("", 10), wraplength=subtitle_wraplength
+    )
     optimal_subtitle_label.pack(pady=(0, 10))
+
+    bottom_buttons_frame = ttk.Frame(info_parent)
+
+    auto_apply_optimal_wallet = tk.BooleanVar(value=True)
+    auto_apply_optimal_toggle_text = tk.StringVar(value="Auto-apply optimal wallet: ON")
+
+    def toggle_auto_apply_optimal() -> None:
+        auto_apply_optimal_wallet.set(not auto_apply_optimal_wallet.get())
+        if auto_apply_optimal_wallet.get():
+            auto_apply_optimal_toggle_text.set("Auto-apply optimal wallet: ON")
+            schedule_optimal_refresh(apply_optimal_wallet=True)
+        else:
+            auto_apply_optimal_toggle_text.set("Auto-apply optimal wallet: OFF")
+
+    auto_apply_optimal_btn = ttk.Button(
+        bottom_buttons_frame,
+        textvariable=auto_apply_optimal_toggle_text,
+        command=toggle_auto_apply_optimal,
+    )
+    _pack_bottom_button(auto_apply_optimal_btn)
 
     def on_save():
         message = askstring("Save probabilities", "Message (optional):", parent=toplevel)
@@ -485,17 +571,16 @@ def _build_visualizer_content(
         except (json.JSONDecodeError, OSError) as e:
             messagebox.showerror("Save failed", str(e), parent=toplevel)
 
-    save_btn = ttk.Button(parent, text="Save probabilities", command=on_save)
-    save_btn.pack(pady=(0, 8))
+    save_btn = ttk.Button(bottom_buttons_frame, text="Save probabilities", command=on_save)
+    _pack_bottom_button(save_btn)
 
     symbols_visible = tk.BooleanVar(value=False)
     symbols_toggle_text = tk.StringVar(value="Show symbols")
 
     def _apply_symbols_visibility() -> None:
         if symbols_visible.get():
-            # Keep the symbolic displays visible and at the bottom (below the scrollable wallet view).
-            poly_delta_outer.pack(fill=tk.X, padx=4, pady=(0, 6))
-            poly_outer.pack(fill=tk.X, padx=4, pady=(0, 6))
+            poly_delta_outer.pack(fill=tk.X, padx=4, pady=(0, 6), before=bottom_buttons_frame)
+            poly_outer.pack(fill=tk.X, padx=4, pady=(0, 6), before=bottom_buttons_frame)
             _sync_poly_delta_text_height()
             _sync_poly_text_height()
             symbols_toggle_text.set("Hide symbols")
@@ -508,10 +593,10 @@ def _build_visualizer_content(
         symbols_visible.set(not symbols_visible.get())
         _apply_symbols_visibility()
 
-    symbols_btn = ttk.Button(parent, textvariable=symbols_toggle_text, command=_toggle_symbols)
-    symbols_btn.pack(pady=(0, 8))
+    symbols_btn = ttk.Button(bottom_buttons_frame, textvariable=symbols_toggle_text, command=_toggle_symbols)
+    _pack_bottom_button(symbols_btn)
 
-    canvas_frame = ttk.Frame(parent)
+    canvas_frame = ttk.Frame(canvas_parent)
     canvas_frame.pack(fill=tk.BOTH, expand=True)
 
     canvas = tk.Canvas(canvas_frame)
@@ -529,8 +614,6 @@ def _build_visualizer_content(
 
     inner_frame = ttk.Frame(canvas)
     canvas_window = canvas.create_window(0, 0, window=inner_frame, anchor=tk.NW)
-
-    _apply_symbols_visibility()
 
     def _on_frame_configure(_event=None):
         canvas.configure(scrollregion=canvas.bbox("all"))
@@ -718,6 +801,9 @@ def _build_visualizer_content(
     inner_frame.update_idletasks()
     canvas.configure(scrollregion=canvas.bbox("all"))
 
+    bottom_buttons_frame.pack(fill=tk.X, padx=10, pady=(8, 10))
+    _apply_symbols_visibility()
+
     refresh_all_buttons()
     update_probability()
 
@@ -762,31 +848,96 @@ def _initial_wallet_for_case(key_count: int, probabilities: dict) -> WalletState
     return WalletState(key_count, list(symmetric_wallet or []), probabilities)
 
 
+def _load_normalized_json_list(path: Path) -> list[tuple[int, dict, str, list[int] | None]]:
+    with open(path, encoding="utf-8") as f:
+        data = json.load(f)
+    if not isinstance(data, list):
+        data = [data]
+    return [_normalize_json_item(item) for item in data]
+
+
+_LAYER_EDIT_RE = re.compile(r"^layer_edit_(?P<cat>.+?)(?:_(?P<n>\d+)keys)?\.json$")
+
+# Preferred display order for layer-edit list categories.
+_CATEGORY_ORDER = [
+    "remove_first",
+    "complete_last",
+    "both",
+    "none",
+    "only_remove_first",
+    "only_complete_last",
+    "only_both",
+]
+
+
+def _parse_list_filename(name: str) -> tuple[str, str]:
+    """Return (key_group, label) for a list file.
+
+    layer_edit_<cat>[_<n>keys].json -> (key group = str(n) or "5", label = <cat>).
+    Anything else -> ("other", filename).
+    """
+    m = _LAYER_EDIT_RE.match(name)
+    if m:
+        n = m.group("n")
+        return (n if n is not None else "5"), m.group("cat")
+    return "other", name
+
+
+def _order_labels(labels: Iterable[str]) -> list[str]:
+    def rank(label: str) -> tuple[int, str]:
+        return (
+            _CATEGORY_ORDER.index(label) if label in _CATEGORY_ORDER else len(_CATEGORY_ORDER),
+            label,
+        )
+
+    return sorted(labels, key=rank)
+
+
 def run_visualizer_from_json(json_path: str):
     """
     Load a JSON file of probability/parameter entries (list of objects) and run the visualizer
     with Prev/Next buttons to step through the list one by one.
-    Each entry can have: probabilities, keyCount/key_count, optimal_threshold, optimal_success, message, etc.
+    Each entry can have: probabilities, keyCount/key_count, optimal_threshold, optimal_success,
+    message, and an optional wallet/bitmasks.
+
+    Two dropdowns at the top let you switch lists: "Keys:" selects the key-count group
+    (parsed from the *_Nkeys.json file name; unsuffixed layer_edit files are treated as 5
+    keys) and "List:" selects the category within that group.
     """
     resolved_path = repo_relative(json_path)
-    with open(resolved_path, encoding="utf-8") as f:
-        data = json.load(f)
-    if not isinstance(data, list):
-        data = [data]
-    if not data:
+
+    # Discover sibling JSON lists and group them by parsed key count.
+    list_dir = resolved_path.parent
+    available = sorted(list_dir.glob("*.json"))
+    if resolved_path not in available:
+        available = [resolved_path, *available]
+
+    groups: dict[str, dict[str, Path]] = {}
+    for p in available:
+        key_group, label = _parse_list_filename(p.name)
+        groups.setdefault(key_group, {})[label] = p
+
+    def _key_group_sort(g: str) -> tuple[int, object]:
+        return (0, int(g)) if g.isdigit() else (1, g)
+
+    key_group_labels = sorted(groups.keys(), key=_key_group_sort)
+    init_group, init_label = _parse_list_filename(resolved_path.name)
+
+    normalized = _load_normalized_json_list(resolved_path)
+    if not normalized:
         raise ValueError("JSON file must contain a non-empty list of entries")
 
-    normalized = [_normalize_json_item(item) for item in data]
-
     root = tk.Tk()
-    root.title(f"Wallet Visualizer — {resolved_path}")
-    root.geometry("800x680")
+    root.geometry("840x700")
 
     nav_frame = ttk.Frame(root)
     nav_frame.pack(fill=tk.X, padx=10, pady=8)
 
     current_index = tk.IntVar(value=0)
-    total = len(normalized)
+    current_path = [resolved_path]
+
+    def update_title():
+        root.title(f"Wallet Visualizer — {current_path[0].name}")
 
     def go_prev():
         i = current_index.get()
@@ -796,15 +947,71 @@ def run_visualizer_from_json(json_path: str):
 
     def go_next():
         i = current_index.get()
-        if i < total - 1:
+        if i < len(normalized) - 1:
             current_index.set(i + 1)
             show_current()
 
+    def load_path(path: Path):
+        nonlocal normalized
+        loaded = _load_normalized_json_list(path)
+        if not loaded:
+            index_label.config(text="(empty list)")
+            return
+        normalized = loaded
+        current_path[0] = path
+        current_index.set(0)
+        update_title()
+        show_current()
+
+    # Key-count picker.
+    ttk.Label(nav_frame, text="Keys:").pack(side=tk.LEFT, padx=(0, 4))
+    key_group_var = tk.StringVar(value=init_group)
+    keys_picker = ttk.Combobox(
+        nav_frame,
+        textvariable=key_group_var,
+        values=key_group_labels,
+        state="readonly",
+        width=7,
+    )
+    keys_picker.pack(side=tk.LEFT, padx=(0, 12))
+
+    # List (category) picker.
+    ttk.Label(nav_frame, text="List:").pack(side=tk.LEFT, padx=(0, 4))
+    list_var = tk.StringVar(value=init_label)
+    list_picker = ttk.Combobox(
+        nav_frame,
+        textvariable=list_var,
+        values=_order_labels(groups[init_group].keys()),
+        state="readonly",
+        width=26,
+    )
+    list_picker.pack(side=tk.LEFT, padx=(0, 16))
+
+    def on_pick_list(_event=None):
+        grp = groups.get(key_group_var.get(), {})
+        path = grp.get(list_var.get())
+        if path is not None:
+            load_path(path)
+
+    def on_pick_keys(_event=None):
+        grp = groups.get(key_group_var.get(), {})
+        labels = _order_labels(grp.keys())
+        list_picker.config(values=labels)
+        if labels:
+            list_var.set(labels[0])
+            load_path(grp[labels[0]])
+
+    keys_picker.bind("<<ComboboxSelected>>", on_pick_keys)
+    list_picker.bind("<<ComboboxSelected>>", on_pick_list)
+
     index_label = ttk.Label(nav_frame, text="", font=("", 11))
-    index_label.pack(side=tk.LEFT, padx=(0, 20))
+
+    ttk.Button(nav_frame, text="← Prev", command=go_prev).pack(side=tk.LEFT, padx=2)
+    ttk.Button(nav_frame, text="Next →", command=go_next).pack(side=tk.LEFT, padx=2)
+    index_label.pack(side=tk.LEFT, padx=(20, 0))
 
     def update_index_label():
-        index_label.config(text=f"Item {current_index.get() + 1} / {total}")
+        index_label.config(text=f"Item {current_index.get() + 1} / {len(normalized)}")
 
     content_frame = ttk.Frame(root)
     content_frame.pack(fill=tk.BOTH, expand=True)
@@ -813,8 +1020,11 @@ def run_visualizer_from_json(json_path: str):
         for w in content_frame.winfo_children():
             w.destroy()
         i = current_index.get()
-        key_count, probs, extra_subtitle = normalized[i]
-        initial_wallet = _initial_wallet_for_case(key_count, probs)
+        key_count, probs, extra_subtitle, wallet = normalized[i]
+        if wallet is not None:
+            initial_wallet = WalletState(key_count, list(wallet), probs)
+        else:
+            initial_wallet = _initial_wallet_for_case(key_count, probs)
         _build_visualizer_content(
             content_frame,
             key_count,
@@ -825,8 +1035,7 @@ def run_visualizer_from_json(json_path: str):
         )
         update_index_label()
 
-    ttk.Button(nav_frame, text="← Prev", command=go_prev).pack(side=tk.LEFT, padx=2)
-    ttk.Button(nav_frame, text="Next →", command=go_next).pack(side=tk.LEFT, padx=2)
+    update_title()
     update_index_label()
     show_current()
     root.mainloop()
@@ -856,8 +1065,8 @@ def generate_random_cases(num_of_keys = 5, num_of_cases: int = 50):
 if __name__ == "__main__":
     #Check these probabilities with previo us symmetric, then with normal symmetric
     #run_visualizer(
-    #    key_count=8,
-    #    probabilities={1: 0.1826, 2: 0.242, 3: 0.3936, 4: 0.1818},
+    #    key_count=5,
+    #    probabilities={1: 0.52, 2: 0, 3: 0.14, 4: 0.34},
     #    orientation="columns",
     #)
 
