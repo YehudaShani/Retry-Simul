@@ -111,3 +111,69 @@ class WalletState:
             for bitmasks in optimal_wallets
         ]
 
+    def shift(self) -> "WalletState":
+        """Apply the combinatorial down-shift (compression) operator in place.
+
+        A wallet's accepting family is the up-closure of ``bitmasks`` (via
+        ``isCovered``). We shift that full up-set toward the lowest key indices
+        and re-extract the minimal generators. This canonicalizes the wallet
+        downward; note the success probability generally changes.
+        """
+        family = _up_closure(self.bitmasks, self.key_count)
+        shifted = _down_shift_family(family, self.key_count)
+        self.bitmasks = _minimal_generators(shifted)
+        return self
+
+
+def _up_closure(bitmasks: Iterable[int], key_count: int) -> set:
+    """All non-empty key combinations that grant access (the up-set)."""
+    return {
+        mask
+        for mask in range(1, 1 << key_count)
+        if isCovered(mask, bitmasks)
+    }
+
+
+def _down_shift_family(family: Iterable[int], key_count: int) -> set:
+    """Repeatedly apply the ij-shift (i < j) until the family stabilizes.
+
+    For a pair of bit positions ``i < j``, each member with bit ``j`` set and
+    bit ``i`` clear is moved to the candidate obtained by clearing ``j`` and
+    setting ``i``, but only when that candidate is not already present.
+    """
+    current = set(family)
+    changed = True
+    while changed:
+        changed = False
+        for j in range(1, key_count):
+            for i in range(j):
+                shifted = set(current)
+                for mask in current:
+                    if (mask >> j) & 1 and not ((mask >> i) & 1):
+                        candidate = (mask & ~(1 << j)) | (1 << i)
+                        if candidate not in current:
+                            shifted.discard(mask)
+                            shifted.add(candidate)
+                if shifted != current:
+                    current = shifted
+                    changed = True
+    return current
+
+
+def _minimal_generators(family: Iterable[int]) -> List[int]:
+    """Minimal elements of an up-set: masks with no proper subset in the family."""
+    members = set(family)
+    minimal = []
+    for mask in members:
+        is_minimal = True
+        remaining = mask
+        while remaining:
+            bit = remaining & (-remaining)
+            if (mask & ~bit) in members:
+                is_minimal = False
+                break
+            remaining &= remaining - 1
+        if is_minimal:
+            minimal.append(mask)
+    return sorted(minimal)
+
