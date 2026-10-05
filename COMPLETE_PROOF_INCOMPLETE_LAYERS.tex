@@ -1,0 +1,721 @@
+\documentclass[11pt]{article}
+
+\usepackage[T1]{fontenc}
+\usepackage{amsmath,amssymb,amsthm,mathtools}
+\usepackage[margin=1in]{geometry}
+\usepackage{microtype}
+
+\newtheorem{theorem}{Theorem}
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{claim}[theorem]{Claim}
+
+\newcommand{\PP}{\mathbb P}
+\newcommand{\EE}{\mathbb E}
+\newcommand{\cF}{\mathcal F}
+\newcommand{\cA}{\mathcal A}
+\newcommand{\cB}{\mathcal B}
+\newcommand{\1}{\mathbf 1}
+
+\title{Canonical Optimal Wallets Have at Most One Incomplete Layer}
+\author{}
+\date{}
+
+\begin{document}
+
+\maketitle
+
+\section{Model and statement}
+
+Let $[n]=\{1,\dots,n\}$.  Independently for each key, let its state be
+\[
+\begin{array}{c|c|c|c}
+\text{state}&\text{owner has the key}&\text{attacker has the key}
+&\text{probability}\\
+\hline
+\text{safe}&1&0&s\\
+\text{stolen}&0&1&t\\
+\text{leaked}&1&1&e\\
+\text{lost}&0&0&\ell
+\end{array}
+\]
+where
+\[
+s+t+e+\ell=1,
+\qquad
+s>\frac12.
+\]
+Write $O,D\subseteq[n]$ for the sets of keys held by the owner and the
+attacker, respectively.  A \emph{wallet} is an upward-closed family
+$\cF\subseteq 2^{[n]}$.  Its success probability is
+\[
+\Phi_{s,t,e,\ell}(\cF)
+   =\PP(O\in\cF,\ D\notin\cF).
+\]
+When the parameters are fixed, we abbreviate this to $\Phi(\cF)$.
+
+For $0\leq k\leq n$, let
+\[
+\cF_k=\cF\cap\binom{[n]}k.
+\]
+The $k$th layer is called \emph{incomplete} if
+\[
+0<|\cF_k|<\binom nk.
+\]
+
+\begin{theorem}\label{thm:main}
+For every wallet $\cF\subseteq2^{[n]}$, there is a wallet
+$\cF^\star\subseteq2^{[n]}$ such that
+\[
+\Phi(\cF^\star)\geq\Phi(\cF)
+\]
+and $\cF^\star$ has at most one incomplete layer.  Consequently, some
+optimal wallet has at most one incomplete layer.
+\end{theorem}
+
+The proof uses three batch edits at the two extreme incomplete layers.
+The main ingredient is a rank-kernel inequality that remains valid in
+the presence of leaked keys.
+
+\section{The three batch edits}
+
+Suppose that $\cF$ has at least two incomplete layers, and let $r<q$ be
+the lowest and highest incomplete ranks.  Upward closure implies that
+every layer below $r$ is empty and every layer above $q$ is full.  Put
+\[
+\cA=\cF_r,
+\qquad
+\cB=\binom{[n]}q\setminus\cF_q,
+\]
+and define
+\[
+\alpha=\frac{|\cA|}{\binom nr},
+\qquad
+\beta=\frac{|\cB|}{\binom nq}.
+\]
+Both $\alpha$ and $\beta$ are strictly between zero and one.  Consider
+the three wallets
+\[
+\cF_R=\cF\setminus\cA,
+\qquad
+\cF_Q=\cF\cup\cB,
+\qquad
+\cF_{RQ}=(\cF\setminus\cA)\cup\cB.
+\]
+They are upward closed.  Indeed, removing the lowest nonempty layer
+cannot violate upward closure, and filling the highest non-full layer
+cannot violate it.
+
+Let
+\[
+I=|O|,
+\qquad
+J=|D|,
+\]
+and, for integers $k,m$, define
+\begin{equation}\label{eq:def-g}
+g_k(m)=\PP(I\geq m,J=k)-\PP(I=k,J<m).
+\end{equation}
+
+\begin{lemma}[Batch-edit bounds]\label{lem:batch-bounds}
+The changes caused by the three edits satisfy
+\begin{align}
+\Phi(\cF_R)-\Phi(\cF)
+   &\geq \alpha g_r(q+1),\label{eq:remove-bound}\\
+\Phi(\cF_Q)-\Phi(\cF)
+   &\geq-\beta g_q(r),\label{eq:fill-bound}\\
+\Phi(\cF_{RQ})-\Phi(\cF)
+   &\geq L_1:=\alpha g_r(q)-\beta g_q(r),\label{eq:joint-bound-1}\\
+\Phi(\cF_{RQ})-\Phi(\cF)
+   &\geq L_2:=\alpha g_r(q+1)-\beta g_q(r+1).
+   \label{eq:joint-bound-2}
+\end{align}
+\end{lemma}
+
+\begin{proof}
+Conditioned on $I=k$, the owner set $O$ is uniform on
+$\binom{[n]}k$; conditioned on $J=k$, the attacker set $D$ is uniform
+on $\binom{[n]}k$.  The same statements remain true after imposing any
+condition involving only $(I,J)$.  This follows directly from the
+exchangeability of the $n$ coordinates.
+
+For the remove edit, a success is certainly gained whenever
+$D\in\cA$ and $I\geq q+1$, because all layers above $q$ are full.  A
+success can be lost only when $O\in\cA$ and $J\leq q$, because an
+attacker with at least $q+1$ keys was already authorized.  Uniformity
+within a rank therefore gives
+\[
+\Phi(\cF_R)-\Phi(\cF)
+\geq
+\alpha\bigl[\PP(I\geq q+1,J=r)-\PP(I=r,J<q+1)\bigr],
+\]
+which is \eqref{eq:remove-bound}.
+
+For the fill edit, a success is certainly gained whenever $O\in\cB$
+and $J<r$, because every layer below $r$ is empty.  A success can be
+lost only when $D\in\cB$ and $I\geq r$, because every authorized owner
+has at least $r$ keys.  Thus
+\[
+\Phi(\cF_Q)-\Phi(\cF)
+\geq
+\beta\bigl[\PP(I=q,J<r)-\PP(I\geq r,J=q)\bigr],
+\]
+which is \eqref{eq:fill-bound}.
+
+There are two ways to perform the joint edit.  If layer $q$ is filled
+first, the fill step contributes at least $-\beta g_q(r)$.  In the
+resulting wallet, layer $q$ is full, so the subsequent removal of
+$\cA$ contributes at least $\alpha g_r(q)$.  This proves
+\eqref{eq:joint-bound-1}.  If $\cA$ is removed first, the removal step
+contributes at least $\alpha g_r(q+1)$.  In the resulting wallet every
+layer through rank $r$ is empty, so subsequently filling $\cB$
+contributes at least $-\beta g_q(r+1)$.  This proves
+\eqref{eq:joint-bound-2}.
+\end{proof}
+
+The elementary discrete derivative
+\begin{equation}\label{eq:g-monotone}
+g_k(m+1)-g_k(m)
+=-\PP(I=m,J=k)-\PP(I=k,J=m)
+\leq0
+\end{equation}
+will be used repeatedly.
+
+\section{The low-sum kernel certificate}
+
+\begin{proposition}[Kernel certificate]\label{prop:certificate}
+If
+\[
+1\leq r<q\leq n-1,
+\qquad
+r+q\leq n,
+\]
+then
+\begin{equation}\label{eq:certificate}
+\boxed{\binom nq\,g_r(q+1)
+\geq
+\binom nr\,g_q(r+1).}
+\end{equation}
+\end{proposition}
+
+We first show that this certificate implies the desired batch
+improvement when $r+q\leq n$.
+
+\begin{lemma}[Low-sum batch improvement]\label{lem:low-sum}
+If $r+q\leq n$, at least one of $\cF_R,\cF_Q,\cF_{RQ}$ has success
+probability at least $\Phi(\cF)$.
+\end{lemma}
+
+\begin{proof}
+If $g_r(q+1)\geq0$, \eqref{eq:remove-bound} shows that the remove edit
+is non-worsening.  If $g_q(r)\leq0$, \eqref{eq:fill-bound} shows that
+the fill edit is non-worsening.  It remains to consider
+\begin{equation}\label{eq:crossing-regime}
+g_r(q+1)<0<g_q(r).
+\end{equation}
+Set
+\[
+w=\PP(I=q,J=r)+\PP(I=r,J=q)
+\]
+and
+\[
+\rho=\frac{\binom nq}{\binom nr}.
+\]
+Since $r<q\leq n-r$, binomial unimodality and symmetry give
+$\rho\geq1$.  By \eqref{eq:g-monotone},
+\begin{equation}\label{eq:two-jumps}
+g_r(q+1)=g_r(q)-w,
+\qquad
+g_q(r+1)=g_q(r)-w.
+\end{equation}
+The certificate \eqref{eq:certificate} says
+\[
+\rho\bigl(g_r(q)-w\bigr)\geq g_q(r)-w.
+\]
+Rearranging,
+\[
+g_r(q)-g_q(r)
+\geq
+(\rho-1)\bigl(w-g_r(q)\bigr).
+\]
+The first inequality in \eqref{eq:crossing-regime} and
+\eqref{eq:two-jumps} imply $w>g_r(q)$, so
+\begin{equation}\label{eq:cross-order-1}
+g_r(q)\geq g_q(r)>0.
+\end{equation}
+Using \eqref{eq:two-jumps} again gives
+\begin{equation}\label{eq:cross-order-2}
+g_q(r+1)\leq g_r(q+1)<0.
+\end{equation}
+
+If $L_1\geq0$, \eqref{eq:joint-bound-1} proves that the joint edit is
+non-worsening.  Otherwise
+\[
+\alpha g_r(q)<\beta g_q(r).
+\]
+By \eqref{eq:cross-order-1}, this implies $\alpha<\beta$.  By
+\eqref{eq:cross-order-2},
+\[
+-g_q(r+1)\geq-g_r(q+1)>0.
+\]
+Consequently
+\[
+\begin{aligned}
+L_2
+&=\beta[-g_q(r+1)]-\alpha[-g_r(q+1)]\\
+&\geq(\beta-\alpha)[-g_r(q+1)]>0.
+\end{aligned}
+\]
+Now \eqref{eq:joint-bound-2} proves that the joint edit is improving.
+\end{proof}
+
+It remains to prove Proposition~\ref{prop:certificate}.  We do this
+coefficientwise.
+
+\section{Coefficient reduction}
+
+Put
+\begin{equation}\label{eq:eta-substitution}
+\eta=s-(t+e+\ell)=2s-1\geq0,
+\qquad
+s=t+e+\ell+\eta.
+\end{equation}
+After this substitution, the difference between the left- and
+right-hand sides of \eqref{eq:certificate} is a homogeneous polynomial
+in $t,e,\ell,\eta$.  We shall prove that every coefficient is
+nonnegative.
+
+Fix a monomial
+\[
+t^a e^b\ell^c\eta^d,
+\qquad
+a+b+c+d=n,
+\]
+and fix a labelled partition
+\[
+[n]=T\sqcup E\sqcup L\sqcup H,
+\qquad
+|T|=a,\quad |E|=b,\quad |L|=c,\quad |H|=d.
+\]
+In the expansion \eqref{eq:eta-substitution}, this partition has the
+following interpretation:
+\[
+\begin{array}{c|c}
+\text{block}&\text{allowed states}\\
+\hline
+T&\text{safe or stolen}\\
+E&\text{safe or leaked}\\
+L&\text{safe or lost}\\
+H&\text{safe only}.
+\end{array}
+\]
+Call a choice of one of the allowed states at every coordinate a
+\emph{toggle assignment}.  If $x,y,z$ denote the numbers chosen as
+stolen, leaked, and lost in the first three blocks, respectively, then
+\begin{equation}\label{eq:toggle-ranks}
+J=x+y,
+\qquad
+n-I=x+z,
+\end{equation}
+and the multiplicity of these choices is
+\[
+\binom ax\binom by\binom cz.
+\]
+
+For this fixed labelled partition define
+\begin{equation}\label{eq:def-G}
+G_k(m)
+=\#\{J=k,\ n-I\leq n-m\}
+-\#\{n-I=n-k,\ J<m\},
+\end{equation}
+where both counts range over all toggle assignments.  The coefficient
+of $t^ae^b\ell^c\eta^d$ in the polynomial from
+\eqref{eq:certificate} is the common positive multinomial factor
+\[
+\frac{n!}{a!\,b!\,c!\,d!}
+\]
+times
+\begin{equation}\label{eq:coefficient-target}
+\binom nqG_r(q+1)-\binom nrG_q(r+1).
+\end{equation}
+Thus Proposition~\ref{prop:certificate} follows once
+\eqref{eq:coefficient-target} is shown to be nonnegative for every
+labelled partition.
+
+\section{Averaging over nested sets}
+
+For $A\subset B\subseteq[n]$, with $|A|=r$ and $|B|=q$, define
+\begin{equation}\label{eq:Lambda}
+\begin{aligned}
+\Lambda(A,B)={}&
+\1_{\{D=A,\ |O|\geq q+1\}}
++\1_{\{O=B,\ |D|\leq r\}}\\
+&-\1_{\{O=A,\ |D|\leq q\}}
+-\1_{\{D=B,\ |O|\geq r+1\}}.
+\end{aligned}
+\end{equation}
+Summing over all toggle assignments and all nested pairs gives
+\begin{align}
+&\sum_{\substack{A\subset B\\|A|=r,\ |B|=q}}
+\ \sum_{\text{toggle assignments}}\Lambda(A,B)
+\notag\\
+&\qquad
+=\binom{n-r}{q-r}G_r(q+1)
+-\binom qrG_q(r+1)\notag\\
+&\qquad
+=\frac{\binom qr}{\binom nr}
+\left[
+\binom nqG_r(q+1)-\binom nrG_q(r+1)
+\right].
+\label{eq:nested-average}
+\end{align}
+Indeed, a fixed $r$-set occurs as the lower member of
+$\binom{n-r}{q-r}$ nested pairs, while a fixed $q$-set contains
+$\binom qr$ lower $r$-sets; the identity in the last line follows by
+double-counting pairs $(A,B)$ with $A\subset B$.
+
+We prove that the left-hand side of \eqref{eq:nested-average} is
+nonnegative.  Fix
+\[
+M=B\setminus A,
+\qquad
+|M|=q-r,
+\]
+and sum over all $r$-sets $A$ disjoint from $M$.  There are four
+exhaustive types.
+
+\begin{enumerate}
+\item If $M$ contains an $H$-coordinate, both negative events in
+\eqref{eq:Lambda} are impossible: an $H$-coordinate belongs to $O$ and
+does not belong to $D$ in every toggle assignment.
+
+\item If $M$ contains both an $E$-coordinate and an $L$-coordinate,
+then $O=A$ is impossible because every $E$-coordinate belongs to $O$,
+whereas $D=B$ is impossible because no $L$-coordinate belongs to $D$.
+
+\item If every coordinate of $M$ lies in $T$, switching all
+coordinates of $M$ from stolen to safe gives injections
+\[
+\{O=A,\ |D|\leq q\}
+\longrightarrow
+\{O=B,\ |D|\leq r\}
+\]
+and
+\[
+\{D=B,\ |O|\geq r+1\}
+\longrightarrow
+\{D=A,\ |O|\geq q+1\}.
+\]
+The inverse on either image switches the coordinates of $M$ back from
+safe to stolen, so both maps are injective.
+
+\item The only remaining types are
+\[
+M\subseteq T\cup L,\quad M\cap L\neq\varnothing,
+\]
+and
+\[
+M\subseteq T\cup E,\quad M\cap E\neq\varnothing.
+\]
+\end{enumerate}
+
+The next two sections handle these final two types.
+
+\section{The $L$-case}
+
+Assume
+\[
+M\subseteq T\cup L,
+\qquad
+l:=|M\cap L|\geq1.
+\]
+Outside $M$, let the numbers of $T,E,L,H$ coordinates be
+\[
+T_0,\quad b,\quad L_0,\quad d,
+\]
+respectively.  Put
+\[
+\delta=n-r-q\geq0,
+\qquad
+k_0=r-b-d.
+\]
+Since $|M|=q-r$, elementary counting gives
+\begin{equation}\label{eq:L-identities}
+T_0=2r-b-L_0-d+\delta,
+\qquad
+2k_0=T_0-b+L_0-d-\delta.
+\end{equation}
+
+We first record the event count that will be used.  In the negative
+event $O=A$, every outside-$M$ coordinate of $E\cup H$ is forced into
+$A$.  If $A$ contains $j$ of the outside $L$-coordinates, it must
+contain $k_0-j$ outside $T$-coordinates.  Pairing this event with the
+positive event $O=B$ leaves precisely the configurations in which the
+number of leaked outside $E$-coordinates is
+\[
+L_0-\delta-j+s,
+\qquad
+1\leq s\leq l.
+\]
+
+For the other positive event, $D=A$, reindex by
+\[
+|A\cap E|=L_0-\delta-j.
+\]
+The required $T$-choice has size complementary to $k_0-j$, and
+therefore has the same binomial count $\binom{T_0}{k_0-j}$.  If $W$ is
+the set of lost coordinates in the combined $L$-block of size
+$L_0+l$, the condition $|O|\geq q+1$ is exactly
+\[
+|W|\leq L_0-j-1.
+\]
+Consequently, after summing \eqref{eq:Lambda} over all $A$ disjoint
+from this fixed $M$, the desired nonnegativity is equivalent to
+\begin{equation}\label{eq:L-sum}
+\sum_{j\in\mathbb Z}\binom{T_0}{k_0-j}H_j\geq0,
+\end{equation}
+where
+\begin{equation}\label{eq:def-Hj}
+\begin{aligned}
+H_j={}&
+\binom b{L_0-\delta-j}
+\sum_{w=0}^{L_0-j-1}\binom{L_0+l}{w}\\
+&-\binom{L_0}j
+\sum_{s=1}^{l}\binom b{L_0-\delta-j+s}.
+\end{aligned}
+\end{equation}
+As usual, an out-of-range binomial coefficient and an empty sum are
+zero.  In particular, $j$ ranges over all integers.
+
+We prove \eqref{eq:L-sum} by an injection from the objects counted by
+the negative part to those counted by the positive part.  A negative
+object indexed by $(j,s)$ consists of
+\[
+\begin{aligned}
+K&\subseteq[T_0],& |K|&=k_0-j=:k,\\
+J&\subseteq[L_0],& |J|&=j,\\
+A_E&\subseteq[b],& |A_E|&=L_0-\delta-j+s,\\
+&&1&\leq s\leq l.
+\end{aligned}
+\]
+Set
+\[
+j'=j-s.
+\]
+Keep $A_E$, and let
+\begin{equation}\label{eq:L-W-map}
+W=([L_0]\setminus J)\cup P_{s-1},
+\end{equation}
+where $P_{s-1}$ is the canonical prefix of length $s-1$ in the fixed,
+ordered $l$-element set $M\cap L$.  Then
+\[
+|W|=L_0-j+s-1=L_0-j'-1,
+\]
+so $W$ is counted by the cumulative sum in the positive term of
+\eqref{eq:def-Hj} at index $j'$.
+
+It remains to raise $K$ from size $k$ to size $k+s$.  Nonvanishing of
+the negative object implies
+\[
+L_0-\delta-j+s\leq b.
+\]
+Using \eqref{eq:L-identities}, we obtain
+\begin{align}
+T_0-2k-s
+&=b-L_0+d+\delta+2j-s\notag\\
+&=(b-L_0+\delta+j-s)+(d+j)\geq0.
+\label{eq:L-raising-condition}
+\end{align}
+Hence $k+s\leq T_0-k$.  Fix a symmetric-chain decomposition of
+$2^{[T_0]}$.  Moving upward by $s$ positions in the chain containing
+$K$ defines an injective map
+\[
+\binom{[T_0]}k\longrightarrow\binom{[T_0]}{k+s};
+\]
+condition \eqref{eq:L-raising-condition} guarantees that the target
+position exists.  Let $K'$ be the image of $K$.
+
+The resulting triple $(K',A_E,W)$ is a positive object at index $j'$.
+It recovers $s$ from the length of the canonical prefix
+$W\cap(M\cap L)$, then recovers $j$, $J$, and $A_E$, and finally
+recovers $K$ from the injective raising map.  Thus the map is
+injective, and images belonging to different $(j,s)$ are disjoint.
+This proves \eqref{eq:L-sum}.
+
+\section{The $E$-case}
+
+Assume
+\[
+M\subseteq T\cup E,
+\qquad
+e_M:=|M\cap E|\geq1.
+\]
+Outside $M$, let the numbers of $T,E,L,H$ coordinates be
+\[
+T_0,\quad E_0,\quad c,\quad d,
+\]
+respectively, and put
+\[
+\delta=n-r-q,
+\qquad
+k_0=r-E_0-d.
+\]
+
+We again first record the event count.  In the positive event $O=B$,
+suppose $A$ contains $j$ outside $L$-coordinates.  It must contain
+every outside $E$- and $H$-coordinate, leaving $k_0-j$ choices from
+the outside $T$-block.  The condition $|D|\leq r$ permits at most
+\[
+c-\delta-j
+\]
+leaked coordinates in the combined $E$-block of size $E_0+e_M$.
+
+For the negative event $D=B$, first pair all configurations covered by
+the positive event $D=A$ by forcing the coordinates of $M$ safe.
+Reindex the remaining configurations by
+\[
+|A\cap E|=c-\delta-j.
+\]
+The unmatched configurations have an outside-$L$ safe set of size
+\[
+j+1-s,
+\qquad
+1\leq s\leq e_M.
+\]
+It follows that the fixed-$M$ sum is
+\begin{equation}\label{eq:E-sum}
+\begin{aligned}
+\sum_{j\in\mathbb Z}\binom{T_0}{k_0-j}
+\Bigg[
+&\binom cj\sum_{w=0}^{c-\delta-j}\binom{E_0+e_M}{w}\\
+&-\binom{E_0}{c-\delta-j}
+\sum_{s=1}^{e_M}\binom c{j+1-s}
+\Bigg].
+\end{aligned}
+\end{equation}
+
+A negative object indexed by $(j,s)$ consists of
+\[
+\begin{aligned}
+K&\subseteq[T_0],& |K|&=k_0-j=:k,\\
+A_E&\subseteq[E_0],& |A_E|&=c-\delta-j,\\
+J&\subseteq[c],& |J|&=j+1-s,\\
+&&1&\leq s\leq e_M.
+\end{aligned}
+\]
+Set
+\[
+j'=j+1-s.
+\]
+Keep $J$, extend $A_E$ by the canonical prefix of length $s-1$ in
+the ordered set $M\cap E$, and raise $K$ by $s-1$ ranks in the fixed
+symmetric-chain decomposition of $2^{[T_0]}$.
+
+The required raising map exists.  Indeed, nonvanishing of $A_E$ and
+$J$ gives
+\[
+E_0-c+\delta+j\geq0,
+\qquad
+j-s+1\geq0.
+\]
+The analogue of \eqref{eq:L-identities} therefore yields
+\begin{align}
+T_0-2k-(s-1)
+&=(E_0-c+\delta+j)+(d+j-s+1)\geq0.
+\label{eq:E-raising-condition}
+\end{align}
+Thus $k+s-1\leq T_0-k$, as required.  The enlarged $E$-set has size
+\[
+c-\delta-j+s-1=c-\delta-j',
+\]
+which is the top allowed size in the positive cumulative term of
+\eqref{eq:E-sum} at index $j'$.
+
+The canonical prefix records $s$.  Hence the image recovers $j$,
+$A_E$, and $J$, and injectivity of the symmetric-chain raising map
+recovers $K$.  Images from different $(j,s)$ are disjoint.  Therefore
+the negative objects in \eqref{eq:E-sum} inject into the positive
+objects, so \eqref{eq:E-sum} is nonnegative.
+
+Every fixed-$M$ contribution in \eqref{eq:nested-average} is now
+nonnegative.  It follows that \eqref{eq:coefficient-target} is
+nonnegative for every labelled partition.  Every coefficient of the
+polynomial obtained after \eqref{eq:eta-substitution} is therefore
+nonnegative.  Since $t,e,\ell,\eta\geq0$, the polynomial itself is
+nonnegative.  This proves Proposition~\ref{prop:certificate}.
+
+\section{The high-sum case by duality}
+
+\begin{lemma}[High-sum batch improvement]\label{lem:high-sum}
+If $r+q>n$, at least one of $\cF_R,\cF_Q,\cF_{RQ}$ has success
+probability at least $\Phi(\cF)$.
+\end{lemma}
+
+\begin{proof}
+Define the dual wallet
+\[
+\cF^\ast
+=\{X\subseteq[n]:[n]\setminus X\notin\cF\}.
+\]
+It is upward closed.  Define transformed owner and attacker sets by
+\[
+O^\ast=[n]\setminus D,
+\qquad
+D^\ast=[n]\setminus O.
+\]
+Coordinatewise, this transformation preserves safe and stolen states
+and exchanges leaked and lost states.  Moreover,
+\[
+O^\ast\in\cF^\ast,\ D^\ast\notin\cF^\ast
+\quad\Longleftrightarrow\quad
+O\in\cF,\ D\notin\cF.
+\]
+Consequently
+\begin{equation}\label{eq:duality-phi}
+\Phi_{s,t,e,\ell}(\cF)
+=\Phi_{s,t,\ell,e}(\cF^\ast).
+\end{equation}
+
+The lowest and highest incomplete ranks of $\cF^\ast$ are
+\[
+r^\ast=n-q,
+\qquad
+q^\ast=n-r.
+\]
+Since $r+q>n$,
+\[
+r^\ast+q^\ast=2n-r-q<n.
+\]
+Lemma~\ref{lem:low-sum}, applied to $\cF^\ast$ with the leaked and lost
+probabilities interchanged, gives a non-worsening remove, fill, or
+joint edit of $\cF^\ast$.  Under duality, removal at the lowest
+incomplete layer becomes filling at the highest incomplete layer of
+$\cF$, filling becomes removal, and the joint edit remains joint.
+Equation \eqref{eq:duality-phi} therefore gives a non-worsening batch
+edit of $\cF$.
+\end{proof}
+
+\section{Completion of the proof}
+
+\begin{proof}[Proof of Theorem~\ref{thm:main}]
+If $\cF$ already has at most one incomplete layer, take
+$\cF^\star=\cF$.  Otherwise, let $r<q$ be its extreme incomplete
+ranks.  Lemma~\ref{lem:low-sum} or Lemma~\ref{lem:high-sum}, according
+as $r+q\leq n$ or $r+q>n$, supplies one of the three batch edits whose
+success probability is at least $\Phi(\cF)$.
+
+The remove edit makes layer $r$ empty, the fill edit makes layer $q$
+full, and the joint edit does both.  No other layer changes.  Hence
+each batch edit eliminates at least one incomplete layer and creates
+none.  After finitely many steps, the process terminates at a wallet
+$\cF^\star$ with at most one incomplete layer and
+\[
+\Phi(\cF^\star)\geq\Phi(\cF).
+\]
+
+Finally, begin with an optimal wallet.  Every non-worsening edit must
+then preserve the optimal value.  The terminal wallet is therefore
+optimal and has at most one incomplete layer.
+\end{proof}
+
+\end{document}

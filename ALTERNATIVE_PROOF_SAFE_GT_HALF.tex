@@ -1,0 +1,764 @@
+\documentclass[11pt]{article}
+
+\usepackage[T1]{fontenc}
+\usepackage{amsmath,amssymb,amsthm,mathtools}
+\usepackage[margin=1in]{geometry}
+\usepackage{microtype}
+\usepackage{xspace}
+
+\sloppy
+
+\newtheorem{theorem}{Theorem}
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{corollary}[theorem]{Corollary}
+
+\newcommand{\Prob}{\ensuremath{\mathbb P}\xspace}
+\newcommand{\cF}{\ensuremath{\mathcal F}\xspace}
+\newcommand{\cA}{\ensuremath{\mathcal A}\xspace}
+\newcommand{\cB}{\ensuremath{\mathcal B}\xspace}
+\newcommand{\one}{\ensuremath{\mathbf 1}\xspace}
+
+\title{Canonical Optimal Wallets Have at Most One Incomplete Layer}
+\author{}
+\date{}
+
+\begin{document}
+
+\maketitle
+
+  \section{Model and canonicalization target}
+
+Let ${[n]\coloneqq\{1,\ldots,n\}}$ be a set of keys.
+Each key independently occupies one of four states.
+The following table defines the state probabilities and records which party holds the key:
+\begin{equation*}
+\begin{array}{c|c|c|c}
+\text{state} & \text{owner holds the key} & \text{attacker holds the key} & \text{probability}\\
+\hline
+\text{safe} & 1 & 0 & s\\
+\text{stolen} & 0 & 1 & t\\
+\text{leaked} & 1 & 1 & e\\
+\text{lost} & 0 & 0 & \ell
+\end{array}
+\end{equation*}
+The four probabilities satisfy the normalization and majority-safe conditions
+\begin{equation}
+s+t+e+\ell=1,
+\qquad
+s>\frac12.
+\label{eq:parameters}
+\end{equation}
+Let $O\subseteq[n]$ denote the set of keys held by the owner, and let $D\subseteq[n]$ denote the set held by the attacker.
+
+A \emph{wallet} is an upward-closed family $\cF\subseteq2^{[n]}$.
+Thus, if ${A\in\cF}$ and ${A\subseteq B}$, then ${B\in\cF}$.
+The wallet succeeds when the owner is authorized and the attacker is not authorized.
+We denote its success probability by
+\begin{equation}
+\Phi_{s,t,e,\ell}(\cF)
+\coloneqq
+\Prob(O\in\cF,\ D\notin\cF).
+\label{eq:success-probability}
+\end{equation}
+When the four state probabilities are fixed, we write $\Phi(\cF)$.
+
+For each rank ${k\in\{0,\ldots,n\}}$, the rank-$k$ layer of the wallet is ${\cF_k\coloneqq\cF\cap\binom{[n]}k}$.
+We call rank $k$ \emph{incomplete} when its layer is neither empty nor full, which means
+\begin{equation*}
+0<|\cF_k|<\binom nk.
+\end{equation*}
+The target result shows that restricting attention to wallets with one incomplete layer does not reduce the attainable success probability.
+
+\begin{theorem}[Extreme-layer canonicalization]\label{thm:canonicalization}
+Fix a nonnegative integer $n$ and nonnegative state probabilities $s,t,e,\ell$ satisfying Equation~\eqref{eq:parameters}.
+For every upward-closed wallet ${\cF\subseteq2^{[n]}}$, there exists an upward-closed wallet ${\cF^\star\subseteq2^{[n]}}$ such that ${\Phi(\cF^\star)\geq\Phi(\cF)}$ and $\cF^\star$ has at most one incomplete layer.
+Consequently, at least one optimal wallet has at most one incomplete layer.
+\end{theorem}
+
+The proof repeatedly removes one of the extreme incomplete layers without decreasing the success probability.
+The remove and fill edits can each lose probability mass, so the argument also permits a joint edit that performs both changes.
+A rank-kernel inequality prevents all three edits from losing simultaneously, and duality transfers the inequality across the middle rank.
+
+  \section{Extreme-layer edits reduce the problem}
+
+Suppose that a wallet $\cF$ has at least two incomplete layers.
+Let $r$ be its lowest incomplete rank and let $q$ be its highest incomplete rank, so ${r<q}$.
+Upward closure makes every layer below rank $r$ empty and every layer above rank $q$ full.
+Denote the authorized part of the lower layer by $\cA$ and the missing part of the upper layer by $\cB$:
+\begin{equation*}
+\cA\coloneqq\cF_r,
+\qquad
+\cB\coloneqq\binom{[n]}q\setminus\cF_q.
+\end{equation*}
+Their respective rank densities are
+\begin{equation*}
+\alpha\coloneqq\frac{|\cA|}{\binom nr},
+\qquad
+\beta\coloneqq\frac{|\cB|}{\binom nq}.
+\end{equation*}
+Both densities lie strictly between zero and one because ranks $r$ and $q$ are incomplete.
+
+We use three wallets obtained by removing the lower layer, filling the upper layer, or applying both edits:
+\begin{equation}
+\cF_R\coloneqq\cF\setminus\cA,
+\qquad
+\cF_Q\coloneqq\cF\cup\cB,
+\qquad
+\cF_{RQ}\coloneqq(\cF\setminus\cA)\cup\cB.
+\label{eq:batch-edits}
+\end{equation}
+Removing the lowest nonempty layer preserves upward closure, and filling the highest non-full layer also preserves upward closure.
+Therefore, all three families in Equation~\eqref{eq:batch-edits} are wallets.
+
+Let ${I\coloneqq|O|}$ be the number of keys held by the owner, and let ${J\coloneqq|D|}$ be the number held by the attacker.
+For integers $k$ and $m$, define the rank kernel
+\begin{equation}
+g_k(m)
+\coloneqq
+\Prob(I\geq m,J=k)-\Prob(I=k,J<m).
+\label{eq:rank-kernel}
+\end{equation}
+The first term measures a guaranteed gain from changing rank $k$, while the second term bounds the corresponding loss.
+
+The next lemma expresses the probability change of every batch edit through this kernel.
+
+\begin{lemma}[Extreme-layer probability bounds]\label{lem:edit-bounds}
+For the extreme incomplete ranks ${r<q}$, the three wallets in Equation~\eqref{eq:batch-edits} satisfy
+\begin{align}
+\Phi(\cF_R)-\Phi(\cF)
+&\geq \alpha g_r(q+1),
+\label{eq:remove-bound-alt}\\
+\Phi(\cF_Q)-\Phi(\cF)
+&\geq-\beta g_q(r),
+\label{eq:fill-bound-alt}\\
+\Phi(\cF_{RQ})-\Phi(\cF)
+&\geq\alpha g_r(q)-\beta g_q(r),
+\label{eq:joint-bound-a-alt}\\
+\Phi(\cF_{RQ})-\Phi(\cF)
+&\geq\alpha g_r(q+1)-\beta g_q(r+1).
+\label{eq:joint-bound-b-alt}
+\end{align}
+\end{lemma}
+
+Exchangeability makes the owner set and the attacker set uniform within each fixed rank.
+The proof uses that uniformity to compare the mass gained and lost by each edit, and it obtains the joint bounds by applying the two single edits in both possible orders.
+
+\begin{proof}
+We first establish the remove and fill bounds directly, then compose them in the two orders that give the joint bounds.
+
+\emph{Step~$1$: Removal bound.}
+Conditioned on ${I=k}$, the owner set $O$ is uniform over $\binom{[n]}k$.
+Conditioned on ${J=k}$, the attacker set $D$ is uniform over $\binom{[n]}k$.
+These uniformity statements remain valid after conditioning on an event determined by the pair $(I,J)$ because the key coordinates are exchangeable.
+
+Removing $\cA$ gains a success whenever ${D\in\cA}$ and ${I\geq q+1}$, since every owner set above rank $q$ is authorized.
+The same edit can lose a success only when ${O\in\cA}$ and ${J<q+1}$, since every attacker set above rank $q$ was already authorized.
+Uniformity within rank $r$ therefore gives the following lower bound on the probability change:
+\begin{equation*}
+\Phi(\cF_R)-\Phi(\cF)
+\geq
+\alpha\bigl[\Prob(I\geq q+1,J=r)-\Prob(I=r,J<q+1)\bigr]
+=\alpha g_r(q+1).
+\end{equation*}
+This establishes Equation~\eqref{eq:remove-bound-alt}.
+
+\emph{Step~$2$: Fill bound.}
+Filling $\cB$ gains a success whenever ${O\in\cB}$ and ${J<r}$, since every attacker set below rank $r$ is unauthorized.
+The edit can lose a success only when ${D\in\cB}$ and ${I\geq r}$, since every authorized owner set has rank at least $r$.
+Uniformity within rank $q$ gives the corresponding lower bound
+\begin{equation*}
+\Phi(\cF_Q)-\Phi(\cF)
+\geq
+\beta\bigl[\Prob(I=q,J<r)-\Prob(I\geq r,J=q)\bigr]
+=-\beta g_q(r).
+\end{equation*}
+This establishes Equation~\eqref{eq:fill-bound-alt}.
+
+\emph{Step~$3$: Joint bounds.}
+Fill rank $q$ first and then remove $\cA$.
+The fill step contributes at least $-\beta g_q(r)$ by Equation~\eqref{eq:fill-bound-alt}.
+After the fill step, rank $q$ is full, so the removal step contributes at least $\alpha g_r(q)$ by the same argument as Step~$1$ with the guaranteed owner tail beginning at rank $q$.
+Adding these contributions gives Equation~\eqref{eq:joint-bound-a-alt}.
+
+For the other order, remove $\cA$ first and then fill rank $q$.
+The removal step contributes at least $\alpha g_r(q+1)$ by Equation~\eqref{eq:remove-bound-alt}.
+After that removal, every rank through $r$ is empty, so the fill step contributes at least $-\beta g_q(r+1)$ by the same argument as Step~$2$ with the attacker lower tail ending at rank $r$.
+Adding these contributions gives Equation~\eqref{eq:joint-bound-b-alt}.
+
+\emph{Conclusion.}
+The two single-edit estimates and their two compositions establish all four claimed bounds.
+\end{proof}
+
+Increasing the second kernel argument by one removes exactly two boundary events from Equation~\eqref{eq:rank-kernel}.
+Thus, for every pair of integers $k,m$, the kernel satisfies the discrete derivative identity
+\begin{equation}
+g_k(m+1)-g_k(m)
+=-\Prob(I=m,J=k)-\Prob(I=k,J=m)
+\leq0.
+\label{eq:kernel-jump-alt}
+\end{equation}
+
+  \section{The certificate forces a non-worsening edit}
+
+The difficult sign pattern occurs when the removal bound is negative and the fill bound is also negative.
+The next lemma isolates the single kernel comparison needed to resolve that pattern.
+
+\begin{lemma}[Certificate-to-edit implication]\label{lem:certificate-to-edit}
+Let ${r<q}$ be the extreme incomplete ranks of a wallet $\cF$, and suppose ${r+q\leq n}$.
+If
+\begin{equation}
+\binom nq g_r(q+1)
+\geq
+\binom nr g_q(r+1),
+\label{eq:assumed-certificate}
+\end{equation}
+then at least one of $\cF_R$, $\cF_Q$, and $\cF_{RQ}$ has success probability at least $\Phi(\cF)$.
+\end{lemma}
+
+The kernel comparison orders the two joint-edit bounds precisely when the individual edits both lose.
+The common boundary mass in Equation~\eqref{eq:kernel-jump-alt} then transfers the order from one side of the two ranks to the other.
+
+\begin{proof}
+We dispose of the two direct sign cases first, then use the certificate to compare the two joint bounds in the remaining crossing regime.
+
+If ${g_r(q+1)\geq0}$, Equation~\eqref{eq:remove-bound-alt} makes the remove edit non-worsening.
+If ${g_q(r)\leq0}$, Equation~\eqref{eq:fill-bound-alt} makes the fill edit non-worsening.
+It remains to consider the crossing regime
+\begin{equation}
+g_r(q+1)<0<g_q(r).
+\label{eq:crossing-regime-alt}
+\end{equation}
+
+Denote the probability mass of the two common boundary events by
+\begin{equation*}
+w\coloneqq\Prob(I=q,J=r)+\Prob(I=r,J=q).
+\end{equation*}
+Equation~\eqref{eq:kernel-jump-alt} gives the two identities
+\begin{equation}
+g_r(q+1)=g_r(q)-w,
+\qquad
+g_q(r+1)=g_q(r)-w.
+\label{eq:common-jump-alt}
+\end{equation}
+Since ${r<q\leq n-r}$, symmetry and unimodality of the binomial coefficients give
+\begin{equation*}
+\rho\coloneqq\frac{\binom nq}{\binom nr}\geq1.
+\end{equation*}
+After dividing Equation~\eqref{eq:assumed-certificate} by $\binom nr$, substituting Equation~\eqref{eq:common-jump-alt}, and rearranging, we obtain
+\begin{equation*}
+g_r(q)-g_q(r)
+\geq
+(\rho-1)\bigl(w-g_r(q)\bigr).
+\end{equation*}
+The left inequality in Equation~\eqref{eq:crossing-regime-alt} and the first identity in Equation~\eqref{eq:common-jump-alt} imply ${w>g_r(q)}$.
+Consequently, the last display and the right inequality in Equation~\eqref{eq:crossing-regime-alt} give
+\begin{equation}
+g_r(q)\geq g_q(r)>0.
+\label{eq:positive-kernel-order-alt}
+\end{equation}
+Subtracting the common mass $w$ from both terms in Equation~\eqref{eq:positive-kernel-order-alt} and using Equation~\eqref{eq:common-jump-alt} gives
+\begin{equation}
+g_q(r+1)\leq g_r(q+1)<0.
+\label{eq:negative-kernel-order-alt}
+\end{equation}
+
+We finally compare the two joint-edit bounds.
+If ${\alpha g_r(q)-\beta g_q(r)\geq0}$, Equation~\eqref{eq:joint-bound-a-alt} makes the joint edit non-worsening.
+Otherwise, Equation~\eqref{eq:positive-kernel-order-alt} implies ${\alpha<\beta}$.
+Equation~\eqref{eq:negative-kernel-order-alt} then yields the lower bound
+\begin{align*}
+\alpha g_r(q+1)-\beta g_q(r+1)
+&=\beta[-g_q(r+1)]-\alpha[-g_r(q+1)]\\
+&\geq(\beta-\alpha)[-g_r(q+1)]\\
+&>0.
+\end{align*}
+Equation~\eqref{eq:joint-bound-b-alt} therefore makes the joint edit improving in the remaining case.
+
+The remove, fill, and joint cases exhaust all possible signs, so one of the three edits is non-worsening.
+\end{proof}
+
+  \section{The rank-kernel certificate}
+
+We prove the certificate in three stages.
+We first expand the majority-safe slack and reduce the probability inequality to an integer coefficient inequality~(\S\ref{subsec:coefficient-reduction}).
+We then average each coefficient over nested rank pairs and isolate a contribution for every difference set~(\S\ref{subsec:nested-pairs}).
+Finally, we prove that every contribution is nonnegative by direct pairings and two rank-raising injections~(\S\ref{subsec:fixed-difference-sets}, \S\ref{subsec:lost-injection}, and \S\ref{subsec:leaked-injection}).
+
+    \subsection{Safe slack reduces the certificate to integer coefficients}\label{subsec:coefficient-reduction}
+
+The majority-safe assumption supplies a nonnegative slack that turns every safe-state factor into a sum of four nonnegative variables.
+Define the safe slack by
+\begin{equation}
+\eta\coloneqq s-(t+e+\ell)=2s-1>0,
+\qquad
+s=t+e+\ell+\eta.
+\label{eq:safe-slack-alt}
+\end{equation}
+The first equality follows from Equation~\eqref{eq:parameters}.
+
+Fix nonnegative integers $a,b,c,d$ satisfying ${a+b+c+d=n}$, and fix a labelled partition
+\begin{equation*}
+[n]=T\sqcup E\sqcup L\sqcup H,
+\qquad
+|T|=a,
+\quad
+|E|=b,
+\quad
+|L|=c,
+\quad
+|H|=d.
+\end{equation*}
+When every occurrence of $s$ is expanded by Equation~\eqref{eq:safe-slack-alt}, the four blocks have the following allowed state choices:
+\begin{equation*}
+\begin{array}{c|c}
+\text{block} & \text{allowed states}\\
+\hline
+T & \text{safe or stolen}\\
+E & \text{safe or leaked}\\
+L & \text{safe or lost}\\
+H & \text{safe only}
+\end{array}
+\end{equation*}
+We call a choice of one allowed state at each coordinate a \emph{toggle assignment}.
+If a toggle assignment chooses $x$ stolen coordinates in $T$, $y$ leaked coordinates in $E$, and $z$ lost coordinates in $L$, then the owner and attacker ranks satisfy
+\begin{equation}
+J=x+y,
+\qquad
+n-I=x+z.
+\label{eq:toggle-ranks-alt}
+\end{equation}
+The number of assignments with these three counts is $\binom ax\binom by\binom cz$.
+
+For this labelled partition, define the integer rank kernel by
+\begin{equation}
+G_k(m)
+\coloneqq
+\#\{I\geq m,\ J=k\}
+-
+\#\{I=k,\ J<m\},
+\label{eq:integer-kernel-alt}
+\end{equation}
+where both counts range over all toggle assignments.
+The next proposition identifies the coefficient that must be nonnegative.
+
+\begin{proposition}[Coefficient reduction]\label{prop:coefficient-reduction}
+For fixed ranks ${1\leq r<q\leq n-1}$, the coefficient of $t^ae^b\ell^c\eta^d$ in
+\begin{equation*}
+\binom nq g_r(q+1)-\binom nr g_q(r+1)
+\end{equation*}
+is the positive multinomial factor $n!/(a!b!c!d!)$ times
+\begin{equation}
+\binom nqG_r(q+1)-\binom nrG_q(r+1).
+\label{eq:coefficient-target-alt}
+\end{equation}
+\end{proposition}
+
+Each occurrence of a safe-state factor chooses exactly one summand from Equation~\eqref{eq:safe-slack-alt}.
+The resulting choice assigns every coordinate to one of the four labelled blocks, and the toggle assignments enumerate the original safe or non-safe choices inside those blocks.
+
+\begin{proof}
+We group the expansion by the coordinates contributing the variables $t,e,\ell,\eta$.
+For a fixed labelled partition, Equation~\eqref{eq:toggle-ranks-alt} shows that the coefficient contributed to $g_k(m)$ is exactly $G_k(m)$.
+There are $n!/(a!b!c!d!)$ labelled partitions with the same four block sizes, and coordinate exchangeability makes their contributions equal.
+Multiplying by the binomial weights in the displayed difference gives Equation~\eqref{eq:coefficient-target-alt} with the stated positive factor.
+\end{proof}
+
+    \subsection{Nested pairs expose local contributions}\label{subsec:nested-pairs}
+
+We next express the coefficient target as an average over pairs of nested sets.
+For sets $A\subset B\subseteq[n]$ with ${|A|=r}$ and ${|B|=q}$, define the signed toggle count
+\begin{align}
+\Lambda(A,B)
+\coloneqq{}&
+\one_{\{D=A,\ I\geq q+1\}}
++\one_{\{O=B,\ J\leq r\}}\notag\\
+&-\one_{\{O=A,\ J\leq q\}}
+-\one_{\{D=B,\ I\geq r+1\}}.
+\label{eq:lambda-alt}
+\end{align}
+Each indicator in Equation~\eqref{eq:lambda-alt} is evaluated on a toggle assignment.
+Summing over toggle assignments and nested pairs gives
+\begin{align}
+&\sum_{\substack{A\subset B\subseteq[n]\\|A|=r,\ |B|=q}}
+\ \sum_{\text{toggle assignments}}\Lambda(A,B)\notag\\
+&\qquad=
+\binom{n-r}{q-r}G_r(q+1)-\binom qrG_q(r+1)\notag\\
+&\qquad=
+\frac{\binom qr}{\binom nr}
+\left[\binom nqG_r(q+1)-\binom nrG_q(r+1)\right].
+\label{eq:nested-average-alt}
+\end{align}
+A fixed rank-$r$ set is the lower member of $\binom{n-r}{q-r}$ nested pairs, while a fixed rank-$q$ set contains $\binom qr$ rank-$r$ subsets.
+This double count proves the first equality, and counting all nested rank pairs proves the second.
+
+For a fixed difference set $M\subseteq[n]$ of size ${q-r}$, define its total contribution by
+\begin{equation}
+\Sigma(M)
+\coloneqq
+\sum_{\substack{A\subseteq[n]\setminus M\\|A|=r}}
+\ \sum_{\text{toggle assignments}}
+\Lambda(A,A\cup M).
+\label{eq:fixed-M-contribution}
+\end{equation}
+Equation~\eqref{eq:nested-average-alt} is the sum of $\Sigma(M)$ over all difference sets $M$ of size ${q-r}$.
+
+    \subsection{Three difference-set types pair directly}\label{subsec:fixed-difference-sets}
+
+Three types of difference set have nonnegative contributions without additional counting.
+
+\begin{lemma}[Direct difference-set pairings]\label{lem:direct-difference-pairings}
+Fix a set $M\subseteq[n]$ with ${|M|=q-r}$.
+The contribution $\Sigma(M)$ is nonnegative if $M$ meets $H$, if $M$ meets both $E$ and $L$, or if $M\subseteq T$.
+\end{lemma}
+
+In the first two cases, block membership makes both negative indicators impossible.
+In the third case, changing every coordinate of $M$ from stolen to safe pairs each negative indicator with its corresponding positive indicator.
+
+\begin{proof}
+There are three cases, determined by which blocks meet $M$.
+
+First, suppose that $M$ contains an $H$-coordinate.
+Every $H$-coordinate belongs to $O$ and does not belong to $D$ under every toggle assignment.
+Since ${M=B\setminus A}$, the event ${O=A}$ and the event ${D=B}$ are both impossible.
+These are exactly the two negative indicators in Equation~\eqref{eq:lambda-alt}, so ${\Sigma(M)\geq0}$.
+
+Second, suppose that $M$ contains an $E$-coordinate and an $L$-coordinate.
+The $E$-coordinate makes ${O=A}$ impossible because it belongs to $O$, while the $L$-coordinate makes ${D=B}$ impossible because it does not belong to $D$.
+Again, both negative indicators vanish, so ${\Sigma(M)\geq0}$.
+
+Third, suppose that $M\subseteq T$.
+The event ${O=A}$ forces every coordinate of $M$ to be stolen because a safe coordinate would belong to $O$.
+For a toggle assignment counted by the negative event ${O=A,\ J\leq q}$, switch every coordinate of $M$ from stolen to safe.
+This injective change produces an assignment counted by the positive event ${O=B,\ J\leq r}$ because ${|M|=q-r}$.
+The event ${D=B}$ also forces every coordinate of $M$ to be stolen because these are the only attacker-held states allowed in block $T$.
+For an assignment counted by the negative event ${D=B,\ I\geq r+1}$, the same switch produces an assignment counted by the positive event ${D=A,\ I\geq q+1}$.
+Switching the coordinates of $M$ back from safe to stolen inverts either map on its image, so both maps are injective.
+The two injections pair every negative contribution with a positive contribution, which proves ${\Sigma(M)\geq0}$.
+\end{proof}
+
+The only remaining difference sets lie in $T\cup L$ and meet $L$, or lie in $T\cup E$ and meet $E$.
+The next two subsections construct injections for these two types.
+
+    \subsection{A lost-block injection handles the first remaining type}\label{subsec:lost-injection}
+
+Fix a difference set ${M\subseteq T\cup L}$ and let the number of its lost-block coordinates be ${m_L\coloneqq|M\cap L|\geq1}$.
+Outside $M$, denote the numbers of $T,E,L,H$ coordinates by $T_0,b,L_0,d$, respectively.
+Define the rank gap and the required number of selected $T$-coordinates by
+\begin{equation*}
+\delta\coloneqq n-r-q\geq0,
+\qquad
+k_0\coloneqq r-b-d.
+\end{equation*}
+Counting the coordinates outside $M$ gives
+\begin{equation}
+T_0=2r-b-L_0-d+\delta,
+\qquad
+2k_0=T_0-b+L_0-d-\delta.
+\label{eq:lost-identities-alt}
+\end{equation}
+We use these identities to compare the positive and negative objects in $\Sigma(M)$.
+
+\begin{lemma}[Lost-block rank-raising injection]\label{lem:lost-injection}
+If ${M\subseteq T\cup L}$ and ${M\cap L\neq\varnothing}$, then ${\Sigma(M)\geq0}$.
+\end{lemma}
+
+After the direct pairings are removed, the unmatched objects can be indexed by the number of outside lost coordinates selected into the lower set.
+The injection moves this index downward, records the displacement in a canonical prefix inside $M\cap L$, and raises the associated $T$-set by the same number of ranks.
+
+\begin{proof}
+We first write the fixed-$M$ contribution as a binomial sum, then inject every object in its negative part into its positive part.
+
+\emph{Step~$1$: Fixed-$M$ count.}
+In the negative event ${O=A}$, every outside-$M$ coordinate in $E\cup H$ is forced into $A$.
+If $A$ contains $j$ outside lost coordinates, it contains $k_0-j$ outside $T$-coordinates.
+Pairing this event with ${O=B}$ leaves the configurations in which the number of leaked outside $E$-coordinates is $L_0-\delta-j+s$ for an integer ${1\leq s\leq m_L}$.
+
+For the other positive event, ${D=A}$, reindex the assignments by ${|A\cap E|=L_0-\delta-j}$.
+The required outside $T$-choice has size complementary to $k_0-j$, so it has the same binomial count $\binom{T_0}{k_0-j}$.
+If $W$ denotes the lost coordinates in the combined lost block of size $L_0+m_L$, the owner-tail condition ${I\geq q+1}$ is equivalent to ${|W|\leq L_0-j-1}$.
+
+For each integer $j$, define the lost-case net count
+\begin{align}
+\Delta_j^L\coloneqq{}&
+\binom b{L_0-\delta-j}
+\sum_{w=0}^{L_0-j-1}\binom{L_0+m_L}{w}\notag\\
+&-
+\binom{L_0}j
+\sum_{s=1}^{m_L}\binom b{L_0-\delta-j+s}.
+\label{eq:lost-net-count-alt}
+\end{align}
+We adopt the convention that an out-of-range binomial coefficient and an empty sum are zero.
+The fixed-$M$ contribution is therefore nonnegative exactly when
+\begin{equation}
+\sum_{j\in\mathbb Z}\binom{T_0}{k_0-j}\Delta_j^L\geq0.
+\label{eq:lost-sum-alt}
+\end{equation}
+
+\emph{Step~$2$: Injection.}
+A negative object indexed by $(j,s)$ consists of sets with the following sizes:
+\begin{align*}
+K&\subseteq[T_0], & |K|&=k_0-j\eqqcolon k,\\
+S_L&\subseteq[L_0], & |S_L|&=j,\\
+A_E&\subseteq[b], & |A_E|&=L_0-\delta-j+s,\\
+&&1&\leq s\leq m_L.
+\end{align*}
+Fix an order on the coordinates in $M\cap L$, and let $P_{s-1}^L$ denote its prefix of length $s-1$.
+Set ${j'=j-s}$, keep $A_E$, and define the image's lost set by
+\begin{equation}
+W\coloneqq([L_0]\setminus S_L)\cup P_{s-1}^L.
+\label{eq:lost-prefix-map-alt}
+\end{equation}
+Its size is
+\begin{equation*}
+|W|=L_0-j+s-1=L_0-j'-1,
+\end{equation*}
+so $W$ is counted by the cumulative positive term of Equation~\eqref{eq:lost-net-count-alt} at index $j'$.
+
+It remains to raise $K$ from rank $k$ to rank $k+s$.
+Nonvanishing of the negative object implies ${L_0-\delta-j+s\leq b}$.
+Using Equation~\eqref{eq:lost-identities-alt}, this condition gives
+\begin{align}
+T_0-2k-s
+&=b-L_0+d+\delta+2j-s\notag\\
+&=(b-L_0+\delta+j-s)+(d+j)\geq0.
+\label{eq:lost-raising-condition-alt}
+\end{align}
+Hence ${k+s\leq T_0-k}$.
+Fix a symmetric-chain decomposition of $2^{[T_0]}$ and move $K$ upward by $s$ positions in its chain.
+Equation~\eqref{eq:lost-raising-condition-alt} guarantees that the target position exists, and movement along disjoint chains defines an injection from rank $k$ to rank $k+s$.
+Denote the image of $K$ by $K'$.
+
+\emph{Step~$3$: Recovery.}
+The prefix length ${|W\cap(M\cap L)|=s-1}$ recovers $s$ from the image.
+The value of $j'$ then recovers $j$, while the outside part of $W$ recovers $S_L$ and the image retains $A_E$.
+Injectivity of the rank-raising map finally recovers $K$ from $K'$.
+Different values of $s$ produce different canonical prefix lengths, while different values of $j$ at fixed $s$ produce different target indices $j'$.
+Thus, images from distinct pairs $(j,s)$ are disjoint.
+
+\emph{Conclusion.}
+Every negative object in Equation~\eqref{eq:lost-sum-alt} has a distinct positive image, so ${\Sigma(M)\geq0}$.
+\end{proof}
+
+    \subsection{A leaked-block injection handles the second remaining type}\label{subsec:leaked-injection}
+
+Fix a difference set ${M\subseteq T\cup E}$ and let the number of its leaked-block coordinates be ${m_E\coloneqq|M\cap E|\geq1}$.
+Outside $M$, denote the numbers of $T,E,L,H$ coordinates by $T_0,E_0,c,d$, respectively.
+Define
+\begin{equation*}
+\delta\coloneqq n-r-q,
+\qquad
+k_0\coloneqq r-E_0-d.
+\end{equation*}
+Counting the coordinates outside $M$ gives
+\begin{equation}
+T_0=2r+\delta-E_0-c-d.
+\label{eq:leaked-identity-alt}
+\end{equation}
+The leaked-block injection mirrors the lost-block injection, but it raises the $T$-set by one fewer rank.
+
+\begin{lemma}[Leaked-block rank-raising injection]\label{lem:leaked-injection}
+If ${M\subseteq T\cup E}$ and ${M\cap E\neq\varnothing}$, then ${\Sigma(M)\geq0}$.
+\end{lemma}
+
+The positive owner event permits a cumulative number of leaked coordinates in the combined leaked block.
+The unmatched negative attacker events move into this cumulative range by recording their displacement as a canonical leaked prefix.
+
+\begin{proof}
+We derive the fixed-$M$ count, construct the rank-raising injection, and show that the image determines its source.
+
+\emph{Step~$1$: Fixed-$M$ count.}
+In the positive event ${O=B}$, suppose that $A$ contains $j$ outside lost coordinates.
+The lower set $A$ contains every outside $E$- and $H$-coordinate, so it contains $k_0-j$ outside $T$-coordinates.
+The attacker condition ${J\leq r}$ permits at most $c-\delta-j$ leaked coordinates in the combined leaked block of size $E_0+m_E$.
+
+For the negative event ${D=B}$, first pair every configuration covered by the positive event ${D=A}$ by forcing the coordinates of $M$ to be safe.
+Reindex the unmatched configurations by ${|A\cap E|=c-\delta-j}$.
+Their outside lost set has size $j+1-s$ for an integer ${1\leq s\leq m_E}$.
+The resulting fixed-$M$ contribution is
+\begin{align}
+\sum_{j\in\mathbb Z}\binom{T_0}{k_0-j}
+\Bigg[
+&\binom cj\sum_{w=0}^{c-\delta-j}\binom{E_0+m_E}{w}\notag\\
+&-\binom{E_0}{c-\delta-j}
+\sum_{s=1}^{m_E}\binom c{j+1-s}
+\Bigg].
+\label{eq:leaked-sum-alt}
+\end{align}
+
+\emph{Step~$2$: Injection.}
+A negative object indexed by $(j,s)$ consists of sets with the following sizes:
+\begin{align*}
+K&\subseteq[T_0], & |K|&=k_0-j\eqqcolon k,\\
+A_E&\subseteq[E_0], & |A_E|&=c-\delta-j,\\
+S_L&\subseteq[c], & |S_L|&=j+1-s,\\
+&&1&\leq s\leq m_E.
+\end{align*}
+Fix an order on $M\cap E$, and let $P_{s-1}^E$ denote its prefix of length $s-1$.
+Set ${j'=j+1-s}$, keep $S_L$, and enlarge $A_E$ by the prefix $P_{s-1}^E$.
+The enlarged leaked set has size
+\begin{equation*}
+c-\delta-j+s-1=c-\delta-j',
+\end{equation*}
+which lies in the positive cumulative term of Equation~\eqref{eq:leaked-sum-alt} at index $j'$.
+
+We raise $K$ from rank $k$ to rank $k+s-1$ in a fixed symmetric-chain decomposition of $2^{[T_0]}$.
+Nonvanishing of $A_E$ and $J$ gives ${E_0-c+\delta+j\geq0}$ and ${j-s+1\geq0}$.
+Using Equation~\eqref{eq:leaked-identity-alt}, these two inequalities give
+\begin{align}
+T_0-2k-(s-1)
+&=E_0-c+d+\delta+2j-s+1\notag\\
+&=(E_0-c+\delta+j)+(d+j-s+1)\geq0.
+\label{eq:leaked-raising-condition-alt}
+\end{align}
+Hence ${k+s-1\leq T_0-k}$, so the target position exists and the rank-raising map is injective.
+
+\emph{Step~$3$: Recovery.}
+The canonical prefix length recovers $s$, and the value of $j'$ then recovers $j$.
+The image retains $S_L$, while deleting its canonical prefix recovers $A_E$.
+Injectivity of the symmetric-chain map recovers $K$.
+Different values of $s$ produce different canonical prefix lengths, while different values of $j$ at fixed $s$ produce different target indices $j'$.
+Thus, images from distinct pairs $(j,s)$ are disjoint.
+
+\emph{Conclusion.}
+Every negative object in Equation~\eqref{eq:leaked-sum-alt} has a distinct positive image, so ${\Sigma(M)\geq0}$.
+\end{proof}
+
+All fixed difference sets have now been handled, so the coefficient reduction yields the required probability inequality.
+
+\begin{proposition}[Rank-kernel certificate]\label{prop:rank-kernel-certificate}
+For ranks ${1\leq r<q\leq n-1}$ satisfying ${r+q\leq n}$,
+\begin{equation}
+\binom nq g_r(q+1)
+\geq
+\binom nr g_q(r+1).
+\label{eq:rank-kernel-certificate-alt}
+\end{equation}
+\end{proposition}
+
+For every monomial in the safe-slack expansion, the nested-pair identity expresses its coefficient as a positive multiple of a sum of fixed difference-set contributions.
+The direct pairings and the two rank-raising injections make every such contribution nonnegative.
+
+\begin{proof}
+We prove nonnegativity first for each coefficient and then for the expanded polynomial.
+
+Fix a labelled partition and a difference set $M$ of size ${q-r}$.
+The possible block types of $M$ are exhaustive.
+Lemma~\ref{lem:direct-difference-pairings} gives ${\Sigma(M)\geq0}$ when $M$ meets $H$, meets both $E$ and $L$, or lies in $T$.
+If none of these cases holds, then either $M\subseteq T\cup L$ and $M$ meets $L$, or $M\subseteq T\cup E$ and $M$ meets $E$.
+Lemmas~\ref{lem:lost-injection} and~\ref{lem:leaked-injection} give ${\Sigma(M)\geq0}$ in these two remaining cases.
+
+Summing over $M$ in Equation~\eqref{eq:nested-average-alt} shows that the integer coefficient in Equation~\eqref{eq:coefficient-target-alt} is nonnegative.
+Proposition~\ref{prop:coefficient-reduction} then shows that every coefficient of the safe-slack expansion is nonnegative.
+The variables $t,e,\ell,\eta$ are nonnegative, so the expanded polynomial is nonnegative.
+Its nonnegativity is exactly Equation~\eqref{eq:rank-kernel-certificate-alt}, which proves the certificate.
+\end{proof}
+
+Combining the established certificate with Lemma~\ref{lem:certificate-to-edit} resolves the low-sum rank range.
+
+\begin{corollary}[Low-sum batch improvement]\label{cor:low-sum-batch}
+If ${r+q\leq n}$, at least one of $\cF_R$, $\cF_Q$, and $\cF_{RQ}$ has success probability at least $\Phi(\cF)$.
+\end{corollary}
+
+Proposition~\ref{prop:rank-kernel-certificate} supplies the hypothesis of Lemma~\ref{lem:certificate-to-edit}, so the corollary follows directly.
+
+  \section{Duality covers the high-sum ranks}
+
+When the extreme ranks lie above the middle of the lattice, complementation reflects them into the low-sum range.
+The reflection exchanges leaked and lost keys but preserves both the majority-safe assumption and the success event.
+
+\begin{lemma}[High-sum batch improvement]\label{lem:high-sum-batch}
+If ${r+q>n}$, at least one of $\cF_R$, $\cF_Q$, and $\cF_{RQ}$ has success probability at least $\Phi(\cF)$.
+\end{lemma}
+
+Wallet duality reflects the two extreme ranks around the middle rank.
+The reflected ranks satisfy the low-sum condition, so Corollary~\ref{cor:low-sum-batch} supplies an edit that dualizes back to one of the original three edits.
+
+\begin{proof}
+We define the dual wallet, identify its success probability and extreme ranks, and transfer its low-sum edit back to the original wallet.
+
+Define the dual wallet by
+\begin{equation*}
+\cF^\ast
+\coloneqq
+\{X\subseteq[n]:[n]\setminus X\notin\cF\}.
+\end{equation*}
+The family $\cF^\ast$ is upward closed because complementation reverses inclusion.
+Define the transformed key sets by
+\begin{equation*}
+O^\ast\coloneqq[n]\setminus D,
+\qquad
+D^\ast\coloneqq[n]\setminus O.
+\end{equation*}
+This transformation preserves safe and stolen states and exchanges leaked and lost states at every coordinate.
+The definitions give the event equivalence
+\begin{equation*}
+O^\ast\in\cF^\ast, D^\ast\notin\cF^\ast
+\quad\Longleftrightarrow\quad
+O\in\cF, D\notin\cF.
+\end{equation*}
+Therefore, the original and dual success probabilities satisfy
+\begin{equation}
+\Phi_{s,t,e,\ell}(\cF)
+=
+\Phi_{s,t,\ell,e}(\cF^\ast).
+\label{eq:success-duality-alt}
+\end{equation}
+
+The lowest and highest incomplete ranks of $\cF^\ast$ are
+\begin{equation*}
+r^\ast=n-q,
+\qquad
+q^\ast=n-r.
+\end{equation*}
+The high-sum hypothesis implies
+\begin{equation*}
+r^\ast+q^\ast=2n-r-q<n.
+\end{equation*}
+Corollary~\ref{cor:low-sum-batch}, applied to $\cF^\ast$ with the leaked and lost probabilities exchanged, supplies a non-worsening remove, fill, or joint edit of the dual wallet.
+Under complementation, removing the dual's lowest incomplete layer fills the original wallet's highest incomplete layer, while filling the dual's highest incomplete layer removes the original wallet's lowest incomplete layer.
+The joint edit remains joint.
+Equation~\eqref{eq:success-duality-alt} therefore transfers the non-worsening dual edit to one of the three edits of $\cF$.
+\end{proof}
+
+  \section{Finite descent proves canonicalization}
+
+The low-sum and high-sum results give the same structural consequence for every wallet with two incomplete layers.
+
+\begin{corollary}[Extreme-layer descent]\label{cor:extreme-layer-descent}
+If a wallet $\cF$ has at least two incomplete layers, then one of the three wallets $\cF_R$, $\cF_Q$, and $\cF_{RQ}$ has success probability at least $\Phi(\cF)$ and has fewer incomplete layers than $\cF$.
+\end{corollary}
+
+The two rank conditions ${r+q\leq n}$ and ${r+q>n}$ are exhaustive, so Corollary~\ref{cor:low-sum-batch} or Lemma~\ref{lem:high-sum-batch} supplies a non-worsening edit.
+The remove edit makes rank $r$ empty, the fill edit makes rank $q$ full, and the joint edit does both, while no other rank changes.
+Thus, every supplied edit eliminates at least one incomplete layer and creates none.
+
+We can now iterate the descent and recover the theorem's statement.
+
+\begin{proof}[Proof of Theorem~\ref{thm:canonicalization}]
+We repeatedly apply Corollary~\ref{cor:extreme-layer-descent}, use the number of incomplete layers to prove termination, and then specialize the argument to an optimal starting wallet.
+
+\emph{Step~$1$: Non-worsening descent.}
+If $\cF$ already has at most one incomplete layer, take ${\cF^\star=\cF}$.
+Otherwise, Corollary~\ref{cor:extreme-layer-descent} produces a wallet with at least the same success probability and strictly fewer incomplete layers.
+Apply the same rule whenever the resulting wallet still has at least two incomplete layers.
+
+\emph{Step~$2$: Finite termination.}
+A wallet on $n$ keys has only $n+1$ ranks.
+Each application of the descent strictly decreases the nonnegative integer equal to the number of incomplete ranks.
+The process therefore terminates after finitely many edits at a wallet $\cF^\star$ with at most one incomplete layer.
+Since every edit is non-worsening, the terminal wallet satisfies
+\begin{equation*}
+\Phi(\cF^\star)\geq\Phi(\cF).
+\end{equation*}
+
+\emph{Step~$3$: Optimal starting wallet.}
+Suppose that the initial wallet $\cF$ is optimal.
+No wallet can have success probability strictly greater than $\Phi(\cF)$, so every non-worsening edit in the descent preserves the optimal value.
+The terminal wallet $\cF^\star$ is therefore optimal and has at most one incomplete layer.
+
+\emph{Conclusion.}
+For every wallet, the finite descent produces a wallet of at least the same success probability with at most one incomplete layer, and an optimal starting wallet produces an optimal terminal wallet.
+\end{proof}
+
+\end{document}
